@@ -1,0 +1,7 @@
+{
+  "name": "Cliques Bidder",
+  "description": "RTB Bidder for Cliques",
+  "repository": "https://github.com/cliquesbidder.git",
+  "logo": "http://node-js-sample.herokuapp.com/node.svg",
+  "keywords": ["node", "express", "static"]
+}
