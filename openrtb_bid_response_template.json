@@ -6,11 +6,14 @@
       "bid": [{
         "id": "1", "impid": "102", "price": 9.43,
         "nurl": "http://adserver.com/winnotice?impid=102",
-        "iurl": "http://adserver.com/pathtosampleimage",
+        "iurl": null,
         "adm": "http://someserver.com",
         "adomain": [ "advertiserdomain.com" ],
+        "adm": null,
         "cid": "campaign111",
-        "crid": "creative112"
+        "crid": "creative112",
+        "h": null,
+        "w": null
       }]
     }]
 }
