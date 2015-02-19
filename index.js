@@ -1,5 +1,4 @@
 var express = require('express');
-var math = require('mathjs');
 var fs = require('fs');
 var http = require('http');
 var bodyParser = require('body-parser');
