@@ -25,8 +25,8 @@ app.post('/bid/', function(request, response){
     var request_id = body.id;
     var bidder_id = request.query.bidder_id;
 
-    console.log('POST Request from ' + hostname + '(' + ip_address + ') to BidderID: ' + bidder_id + ', RequestID: ' + request_id);
-    console.log(body);
+    console.log('POST Request from ' + hostname + '(' + ip_address + ') to BidderID: ' + bidder_id + ', AuctionID: ' + request_id);
+    //console.log(body);
 
     var json_response;
     //get hostname of incoming request to send win-notice back to
@@ -39,6 +39,13 @@ app.post('/bid/', function(request, response){
         response.status(200).json(json_response);
         response.send();
     });
+});
+
+app.get('/win/', function(request, response){
+    console.log("GET request: Win notification " + request.originalUrl);
+    response.set(fake_bidder.DEFAULT_HEADERS);
+    response.status(200);
+    response.send();
 });
 
 

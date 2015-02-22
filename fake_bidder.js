@@ -7,14 +7,29 @@ var app = express();
 app.use(bodyParser.json()); // for  /> application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
+var DEFAULT_HEADERS = {
+    "x-openrtb-version": 2.3,
+    "content-type": "application/json"
+};
+
 exports.get_single_seatbid_fake_response = get_single_seatbid_fake_response;
+exports.DEFAULT_HEADERS = DEFAULT_HEADERS;
 
 function _get_fake_bidder_nurl(request){
     //construct URL to pass in bid response as nurl for win notification
     var nurl_base = "http://" + request.headers.host;
     // assumes single impression contained in bid request
-    var impid = request.body.imp[0].id;
-    qs = querystring.encode({"impid":impid});
+    //var impid = request.body.imp[0].id;
+    qs = querystring.encode({
+        //"impid":impid,
+        "aid": "${AUCTION_ID}",
+        "bid": "${AUCTION_BID_ID}",
+        "imp": "${AUCTION_IMP_ID}",
+        "seat": "${AUCTION_SEAT_ID}",
+        "ad": "${AUCTION_AD_ID}",
+        "price": "${AUCTION_PRICE}",
+        "cur": "${AUCTION_CURRENCY}"
+    });
     return nurl_base + '/win?' + qs;
 }
 
@@ -127,25 +142,24 @@ function get_single_seatbid_fake_response(request, callback){
 
     // replace bid values with random numbers
     response_data.seatbid[0].bid[0].price = +((Math.random() * 10).toFixed(2));
-    response_data.id =  Math.round(Math.random() * 10e10);
+    response_data.bidid = Math.round(Math.random() * 10e10);
     response_data.seatbid[0].seat =  Math.round(Math.random() * 10e3);
-    response_data.seatbid[0].bid[0].id =  Math.round(Math.random() * 10e2);
+    response_data.seatbid[0].bid[0].id =  Math.round(Math.random() * 10e7);
 
     //now populate pass-back values
 
     // WARNING: assumes SINGLE IMPRESSION contained in bid request, i.e.
     // that body.imp.length == 1
     response_data.seatbid[0].bid[0].impid = request.body.imp[0].id;
-    response_data.bidid = request.body.id;
+    response_data.id =  request.body.id;
     response_data.seatbid[0].bid[0].nurl = _get_fake_bidder_nurl(request);
 
     //now add in "real" advertiser metadata
     var json_metadata = sample_metadata;
     var advertiser_index = Math.round(Math.random() * 9); // just randomly choose from array of length 10
     var this_metadata = json_metadata[advertiser_index];
-
-    //now set advertiser-specific variables in response object
     response_data.seatbid[0].bid[0].adm = this_metadata.adm;
+    response_data.seatbid[0].bid[0].adid = advertiser_index;
     response_data.seatbid[0].bid[0].adomain = this_metadata.adomain;
     response_data.seatbid[0].bid[0].h = this_metadata.h;
     response_data.seatbid[0].bid[0].w = this_metadata.w;
