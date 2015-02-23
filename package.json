@@ -17,7 +17,10 @@
     "mongodb": "~1.4.x",
     "mongoose": "~3.8.x",
     "pm2": "^0.12.5",
-    "request": "^2.53.0"
+    "request": "^2.53.0",
+    "winston": "^0.9.0",
+    "request-ip": "0.0.4",
+    "response-time": "^2.3.0"
   },
   "engines": {
     "node": "0.10.x"
