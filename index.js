@@ -1,3 +1,5 @@
+var node_utils = require('cliques_node_utils');
+
 var express = require('express');
 var bodyParser = require('body-parser');
 var fake_bidder = require('./fake_bidder');
