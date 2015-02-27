@@ -1,5 +1,6 @@
 var winston = require('winston');
 var math = require('mathjs');
+var path = require('path');
 
 var filename = process.argv[2];
 
