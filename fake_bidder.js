@@ -13,6 +13,7 @@ var DEFAULT_HEADERS = {
 };
 
 exports.get_single_seatbid_fake_response = get_single_seatbid_fake_response;
+exports.get_multi_seatbid_response = get_multi_seatbid_response;
 exports.DEFAULT_HEADERS = DEFAULT_HEADERS;
 
 function _get_fake_bidder_nurl(request){
@@ -167,5 +168,44 @@ function get_single_seatbid_fake_response(request, callback){
     response_data.seatbid[0].bid[0].crid = this_metadata.crid;
 
     // finally, call callback
+    callback(null, response_data);
+}
+
+function get_multi_seatbid_response(request, num_bids, callback){
+
+    // generates simulated bid response to bid request
+    // request must be original HTTP POST request object representing the incoming bid request
+    var advertiser_metadata = sample_metadata.slice(0); //shallow copy metadata
+    var response_data = {};
+
+    // populate bidresponse object level values
+    response_data.id =  request.body.id;
+    response_data.bidid = Math.round(Math.random() * 10e10);
+    response_data.cur = "USD";
+    // seatbid object level values
+    response_data.seatbid = [{
+        seat: Math.round(Math.random() * 10e3),
+        bid:[]
+    }];
+    // replace bid values with random numbers
+    for (var i = 0; i < num_bids; i++){
+        // choose element from array at random
+        var random_ind = Math.round(Math.random() * (advertiser_metadata.length-1));
+        var this_metadata = advertiser_metadata.splice(random_ind, 1)[0];
+        // fill in random values
+        response_data.seatbid[0].bid[i] = {
+            id: Math.round(Math.random() * 10e7),
+            impid: request.body.imp[0].id,
+            nurl: _get_fake_bidder_nurl(request),
+            adid: random_ind,
+            price: +((Math.random() * 10).toFixed(2)),
+            adm: this_metadata.adm,
+            adomain: this_metadata.adomain,
+            h: this_metadata.h,
+            w: this_metadata.w,
+            cid: this_metadata.cid,
+            crid: this_metadata.crid
+        };
+    }
     callback(null, response_data);
 }

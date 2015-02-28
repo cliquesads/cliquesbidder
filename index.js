@@ -10,6 +10,7 @@ var winston = require('winston');
 var path = require('path');
 var util = require('util');
 var responseTime = require('response-time');
+var config = require('config');
 
 // Set up winston logger instance
 var logfile = path.join(
@@ -27,7 +28,7 @@ var logger = new (winston.Logger)({
 
 var app = express();
 
-app.set('port', (process.env.PORT || 5100));
+app.set('port', (config.get('Bidder.http.port') || 5000));
 app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.json()); // for  /> application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
@@ -57,7 +58,7 @@ app.post('/bid/', function(request, response){
     //TODO: Replace with variable for secure/non-secure http protocol as applicable
 
     // now build bid response
-    fake_bidder.get_single_seatbid_fake_response(request, function (err, response_data) {
+    fake_bidder.get_multi_seatbid_response(request,7,function(err, response_data) {
         if (err) {
             logger.error(err);
         }
