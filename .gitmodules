@@ -1,0 +1,3 @@
+[submodule "rtbkit"]
+	path = rtbkit
+	url = git@github.com:cliquesads/rtbkit-bin.git
