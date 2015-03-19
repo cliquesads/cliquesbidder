@@ -7,7 +7,9 @@ CONFIG_DIR=$REPOSITORY_DIR/cliques-config/rtbkit
 APACHE_DIR=/etc/apache2
 LOCAL_DIR=$REPOSITORY_DIR/cliquesbidder/rtbkit
 
-source $LOCAL_DIR/rtbkit-*.sh
+cd $LOCAL_DIR
+source rtbkit-*.sh
+cd ..
 
 # Start PostGreSQL for graphite monitoring
 /etc/init.d/postgresql
