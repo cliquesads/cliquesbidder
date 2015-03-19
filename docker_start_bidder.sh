@@ -22,7 +22,9 @@ make all
 # cause version in binary install can't find classpath for some reason
 #$LOCAL_DIR/bin/zookeeper/bin/zkServer.sh start
 $HOME/local/bin/zookeeper/bin/zkServer.sh start
-
 # Start Redis
 redis-server $CONFIG_DIR/redis.conf
-
+# Start Carbon
+/opt/graphite/bin/carbon-cache.py start
+# Start apache
+service apache2 restart
