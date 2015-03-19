@@ -12,7 +12,7 @@ source rtbkit-*.sh
 cd ..
 
 # Start PostGreSQL for graphite monitoring
-/etc/init.d/postgresql
+/etc/init.d/postgresql start
 
 cd $LOCAL_DIR/examples
 make all
