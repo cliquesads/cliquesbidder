@@ -15,7 +15,9 @@ cd ..
 
 # Stop zookeeper
 #$LOCAL_DIR/bin/zookeeper/bin/zkServer.sh stop
-$HOME/local/bin/zookeeper/bin/zkServer.sh stop
+cd $HOME/local/bin/zookeeper/bin/zkServer.sh
+./zkServer.sh stop
+cd $LOCAL_DIR/..
 # Start Redis
 redis-cli shutdown
 # Start Carbon
