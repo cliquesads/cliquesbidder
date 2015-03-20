@@ -9,7 +9,6 @@ LOCAL_DIR=$REPOSITORY_DIR/cliquesbidder/rtbkit
 
 cd $LOCAL_DIR
 source rtbkit-*.sh
-cd ..
 
 # Start PostGreSQL for graphite monitoring
 /etc/init.d/postgresql start
@@ -31,8 +30,29 @@ service apache2 restart
 
 #start the mock exchange and detach
 cd $LOCAL_DIR
-./bin/mock_exchange_runner >& /tmp/mock_exchange_runner.out &
+
+#flag -m specifies whether to run mock_exchange or not
+while getopts ":m:" opt; do
+  case $opt in
+    m)
+      echo "-m is a flag, don't understand argument $OPTARG but I assume you want to run the mock_exchange" >&2
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      echo "Use -m flag to indicate whether or not you want to run mock_exchange"
+      exit 1
+      ;;
+    :)
+      ./bin/mock_exchange_runner >& /tmp/mock_exchange_runner.out &
+      ;;
+  esac
+done
+
+#make symlink to config dir in parent directory if one doesn't already exist
+if [ ! -L 'cliquesconfig' ]; then
+    ln -s ../config/rtbkit cliquesconfig
+fi
 
 #launch the bidder itself
-./build/x86_64/bin/launcher --node localhost --script ./launch.sh rtbkit/sample.launch.json
+./build/x86_64/bin/launcher --node localhost --script ./launch.sh cliquesconfig/launch.json
 ./launch.sh
