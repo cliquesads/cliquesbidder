@@ -23,4 +23,5 @@ redis-cli shutdown
 # Start apache
 service apache2 stop
 
-#figoure out how to kill bidder service with TMUX
+#kill bidder
+tmux kill-session -t rtb
