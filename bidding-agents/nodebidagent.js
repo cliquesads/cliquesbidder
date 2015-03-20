@@ -1,5 +1,5 @@
-var RTBkit = require('./rtbkit/bin/rtb'),
-    services_lib = require('./rtbkit/bin/services'),
+var RTBkit = require('./../rtbkit/bin/rtb'),
+    services_lib = require('./../rtbkit/bin/services'),
     budgetController = require('./budget-controller'),
     config = require('./nodebidagent-config').config,
     zookeeperUri = "localhost:2181", // must point to same Zookeeper as routers
@@ -12,7 +12,7 @@ var RTBkit = require('./rtbkit/bin/rtb'),
 // uri,install name and location from bootstrap.json
 services.useZookeeper(zookeeperUri,"rtb-test", "mtl"); 
 
-// yes, we want to log to carbon
+// yes, we want to log to carbonls
 services.logToCarbon('127.0.0.1:2003');
 
 var addAccountHandler = function(err, res){
@@ -104,7 +104,7 @@ agent.onClick = function(timestamp, auctionId, spotId, spotIndex, bidRequest, bi
 
 
 agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvailableMs, augmentations, wcm){
-  console.log("bidrequest", augmentations);
+  console.log("bidrequest", augmentations, bidRequest);
   var amount = new RTBkit.MicroUSD(100);
   for (var i=0; i<bids.length; i++){
     // TODO: validate a bid before deciding to put an amount on it
