@@ -51,3 +51,4 @@ In order to login to Graphite, there are a couple of extra steps you'll need to 
    ```sh
    http://192.168.59.103:49154
    ```
+4. To login (you don't have to), you can use username: `docker`, password: `docker`

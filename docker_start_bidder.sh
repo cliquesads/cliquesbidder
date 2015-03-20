@@ -30,9 +30,9 @@ redis-server $CONFIG_DIR/redis.conf
 service apache2 restart
 
 #start the mock exchange and detach
-mock_exchange_runner >& /tmp/mock_exchange_runner.out &
+cd $LOCAL_DIR
+./bin/mock_exchange_runner >& /tmp/mock_exchange_runner.out &
 
 #launch the bidder itself
-cd $LOCAL_DIR
 ./build/x86_64/bin/launcher --node localhost --script ./launch.sh rtbkit/sample.launch.json
 ./launch.sh
