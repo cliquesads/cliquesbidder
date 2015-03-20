@@ -3,7 +3,7 @@
 set -e
 
 REPOSITORY_DIR=$HOME/repositories
-CONFIG_DIR=$REPOSITORY_DIR/cliques-config/rtbkit/dep-config
+CONFIG_DIR=$REPOSITORY_DIR/cliques-config/rtbkit/dep_config
 APACHE_DIR=/etc/apache2
 LOCAL_DIR=$REPOSITORY_DIR/cliquesbidder/rtbkit
 
