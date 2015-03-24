@@ -9,7 +9,7 @@ exports.config = {
   "account": ["hello","world"],
   "bidProbability": 1.0,
   "creatives": [ 
-   {
+    {
       "format":{"width":720, "height":90},
       "id":0,
       "name":"LeaderBoard",
@@ -25,15 +25,18 @@ exports.config = {
       "format":{"width":300,"height":250},
       "id":2,
       "name":"BigBox",
-      "tagId":2
+      "tagId":2,
+      "providerConfig":{
+          "adm": "http://storage.googleapis.com/cliquesads-ads/untapped/SS_300x250_v2.jpg"
+      }
     }
   ],
   "augmentations":{
     "frequency-cap-ex":{
       "required":true,
       "config":42,
-      "filters":{"include":["pass-frequency-cap-ex"]}    
+      "filters":{"include":["pass-frequency-cap-ex"]}
     }  
   },
   "maxInFlight": 50
-} 
+}
