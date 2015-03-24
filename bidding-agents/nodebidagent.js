@@ -20,7 +20,7 @@ var addAccountHandler = function(err, res){
     console.log("Error adding account "+accountFullName);
     console.log(err);
   }
-}
+};
 
 var topupErrorHandler = function(err, res){
   if (err) {
@@ -29,7 +29,7 @@ var topupErrorHandler = function(err, res){
     // shutdown with an error
     process.exit(1);
   }
-}
+};
 
 // Keep the budget for this subaccount topped up
 var pace = function(){
