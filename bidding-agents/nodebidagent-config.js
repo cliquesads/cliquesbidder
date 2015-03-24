@@ -8,6 +8,11 @@
 exports.config = {
   "account": ["hello","world"],
   "bidProbability": 1.0,
+    "providerConfig":{
+        "casale":{
+            "seat": 129349
+        }
+    },
   "creatives": [ 
     {
       "format":{"width":720, "height":90},
@@ -25,11 +30,12 @@ exports.config = {
       "format":{"width":300,"height":250},
       "id":2,
       "name":"BigBox",
-      "tagId":2
-      //"providerConfig":{
-      //    "adm": "http://storage.googleapis.com/cliquesads-ads/untapped/SS_300x250_v2.jpg",
-      //    "nurl": "http://10.240.47.15:12340"
-      //}
+      "tagId":2,
+      "providerConfig":{
+          "casale":{
+              "adm": "http://storage.googleapis.com/cliquesads-ads/untapped/SS_300x250_v2.jpg"
+          }
+      }
     }
   ],
   "augmentations":{
