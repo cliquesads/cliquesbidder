@@ -33,7 +33,7 @@ exports.config = {
       "tagId":2,
       "providerConfig":{
           "casale":{
-              "adm": "http://storage.googleapis.com/cliquesads-ads/untapped/SS_300x250_v2.jpg",
+              "adm": "<iframe id='a1faac72' name='a1faac72' src='http://ads.cliquesads.com/www/delivery/afr.php?zoneid=3' frameborder='0' scrolling='no' width='300' height='250'><a href='http://ads.cliquesads.com/www/delivery/ck.php?n=a3312a64' target='_blank'><img src='http://ads.cliquesads.com/www/delivery/avw.php?zoneid=3&amp;n=a3312a64' border='0' alt='' /></a></iframe>",
               "adomain": ["www.untapped.cc"]
           }
       }
