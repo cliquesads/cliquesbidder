@@ -27,7 +27,8 @@ exports.config = {
       "name":"BigBox",
       "tagId":2,
       "providerConfig":{
-          "adm": "http://storage.googleapis.com/cliquesads-ads/untapped/SS_300x250_v2.jpg"
+          "adm": "http://storage.googleapis.com/cliquesads-ads/untapped/SS_300x250_v2.jpg",
+          "nurl": "http://10.240.47.15:12340"
       }
     }
   ],
