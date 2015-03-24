@@ -33,7 +33,8 @@ exports.config = {
       "tagId":2,
       "providerConfig":{
           "casale":{
-              "adm": "http://storage.googleapis.com/cliquesads-ads/untapped/SS_300x250_v2.jpg"
+              "adm": "http://storage.googleapis.com/cliquesads-ads/untapped/SS_300x250_v2.jpg",
+              "adomain": "http://untapped.cc"
           }
       }
     }
