@@ -1,5 +1,6 @@
 //first party deps
 var node_utils = require('cliques_node_utils');
+var logging = node_utils.logging;
 var fake_bidder = require('./fake_bidder');
 
 //third-party deps
@@ -19,7 +20,7 @@ var logfile = path.join(
     util.format('bidder_%s.log',node_utils.dates.isoFormatUTCNow())
 );
 
-var logger = new (winston.Logger)({
+var logger = new logging.CLogger({
     transports: [
         new (winston.transports.Console)({timestamp:true}),
         new (winston.transports.File)({filename:logfile,timestamp:true})
@@ -40,6 +41,11 @@ app.use(function(req, res, next) {
 });
 app.use(responseTime());
 
+// custom Request logging middleware
+app.use(function(req, res, next){
+    logger.httpRequestMiddleware(req, res, next);
+});
+
 app.get('/', function(request, response) {
     response.send('bidder');
 });
@@ -49,14 +55,8 @@ app.listen(app.get('port'), function() {
 });
 
 app.post('/bid/', function(request, response){
-    //log request data
-    var body = request.body;
-    var meta = {bid_request: body};
-    node_utils.logging.log_request(logger, request, meta);
-    //console.log(body);
     var json_response;
     //TODO: Replace with variable for secure/non-secure http protocol as applicable
-
     // now build bid response
     fake_bidder.get_multi_seatbid_response(request,7,function(err, response_data) {
         if (err) {
@@ -66,14 +66,13 @@ app.post('/bid/', function(request, response){
         response.set(fake_bidder.DEFAULT_HEADERS);
         response.status(200).json(json_response);
         response.send();
-        node_utils.logging.log_response(logger, response)
+        logger.httpResponse(response)
     });
 });
 
-app.get('/win/', function(request, response){
-    node_utils.logging.log_request(logger, request);
+app.post('/win/', function(request, response){
     response.set(fake_bidder.DEFAULT_HEADERS);
     response.status(200);
     response.send();
-    node_utils.logging.log_response(logger, response);
+    logger.httpResponse(response);
 });
