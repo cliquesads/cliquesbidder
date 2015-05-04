@@ -4,6 +4,7 @@ var logging = node_utils.logging;
 var fake_bidder = require('./fake_bidder');
 
 //third-party deps
+var pmx = require('pmx').init();
 var express = require('express');
 var bodyParser = require('body-parser');
 var requestIp = require('request-ip');

@@ -17,7 +17,7 @@
     "mathjs": "^1.3.0",
     "mongodb": "~1.4.x",
     "mongoose": "~3.8.x",
-    "pm2": "^0.12.5",
+    "pmx": "^0.3.3",
     "request": "^2.53.0",
     "request-ip": "0.0.4",
     "response-time": "^2.3.0",
