@@ -58,7 +58,7 @@ app.post('/bid/', function(request, response){
     var json_response;
     //TODO: Replace with variable for secure/non-secure http protocol as applicable
     // now build bid response
-    fake_bidder.get_multi_seatbid_response(request,7,function(err, response_data) {
+    fake_bidder.get_multi_seatbid_response(request,2,function(err, response_data) {
         if (err) {
             logger.error(err);
         }
