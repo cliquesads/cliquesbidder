@@ -9,7 +9,7 @@ if [ ! -d $HOME"/repositories/cliques-config" ]; then
 else
     cd ../cliques-config
     git pull
-    cd ../cliques-adserver
+    cd ../cliquesbidder
 fi
 
 processname='cliques-bidder'
