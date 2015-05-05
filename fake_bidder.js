@@ -57,7 +57,7 @@ var data = {
 };
 
 var adserver_host = config.get('AdServer.http.external.hostname');
-var adserver_port = config.get('AdServer.http.port');
+var adserver_port = config.get('AdServer.http.external.port');
 var tag = new tags.ImpTag(adserver_host, { port: adserver_port });
 
 
