@@ -11,7 +11,7 @@ cd $LOCAL_DIR
 source rtbkit-*.sh
 
 # Start PostGreSQL for graphite monitoring
-/etc/init.d/postgresql start
+#/etc/init.d/postgresql start
 
 cd $LOCAL_DIR/examples
 make all
