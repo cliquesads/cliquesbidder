@@ -90,9 +90,9 @@ var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
  */
 agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvailableMs, augmentations, wcm){
     var amount = new RTBkit.MicroUSD(100);
-    console.log("Bid request: " + JSON.stringify(bidRequest));
+    console.log("Bid request: " + JSON.stringify(bidRequest, null, 2));
 
-    console.log("Bids Obj:" + JSON.stringify(bids));
+    console.log("Bids Obj:" + JSON.stringify(bids, null, 2));
     for (var i=0; i<bids.length; i++){
         // TODO: validate a bid before deciding to put an amount on it
         bids.bid(i,bids[i].availableCreatives[0],amount,1); // spotId, creativeIndex, price, priority
