@@ -11,7 +11,7 @@ cd $LOCAL_DIR
 source rtbkit-*.sh
 cd ..
 
-/etc/init.d/postgresql stop
+#sudo /etc/init.d/postgresql stop
 
 # Stop zookeeper
 #$LOCAL_DIR/bin/zookeeper/bin/zkServer.sh stop
@@ -21,7 +21,7 @@ cd $LOCAL_DIR/..
 # Start Redis
 redis-cli shutdown
 # Start Carbon
-/opt/graphite/bin/carbon-cache.py stop
+sudo /opt/graphite/bin/carbon-cache.py stop
 # Start apache
 service apache2 stop
 
