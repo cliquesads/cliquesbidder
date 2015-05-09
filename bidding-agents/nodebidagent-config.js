@@ -78,7 +78,7 @@ exports.config =
                 "width": 300,
                 "height": 250
             },
-            "id": "553176cb469cbc6e40e28682",
+            "id": 1,
             "tagId": "553176cb469cbc6e40e28682",
             "providerConfig": {
                 "cliques": {
@@ -94,7 +94,7 @@ exports.config =
                 "width": 160,
                 "height": 600
             },
-            "id": "553176cb469cbc6e40e28684",
+            "id": 2,
             "tagId": "553176cb469cbc6e40e28684",
             "providerConfig": {
                 "cliques": {
@@ -110,7 +110,7 @@ exports.config =
                 "width": 728,
                 "height": 90
             },
-            "id": "553176cb469cbc6e40e28686",
+            "id": 3,
             "tagId": "553176cb469cbc6e40e28686",
             "providerConfig": {
                 "cliques": {
