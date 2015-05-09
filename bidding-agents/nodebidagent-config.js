@@ -55,22 +55,10 @@ exports.config =
         "553176cb469cbc6e40e28687"
     ],
     "bidProbability": 1,
-    "base_bid": 5,
-    "max_bid": 9,
     "providerConfig": {
         "cliques": {
             "seat": "Backcountry"
         }
-    },
-    "targeting": {
-        "country_targets": [],
-        "dma_target": [],
-        "placement_targets": [
-            {
-                "weight": 2,
-                "_id": "553176cb469cbc6e40e28688"
-            }
-        ]
     },
     "augmentations": {
         "frequency-cap-ex": {

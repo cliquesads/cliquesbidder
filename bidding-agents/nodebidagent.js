@@ -90,11 +90,19 @@ var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
  */
 agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvailableMs, augmentations, wcm){
     var amount = new RTBkit.MicroUSD(100);
-    console.log("Bid request: " + JSON.stringify(bidRequest, null, 2));
-
-    console.log("Bids Obj:" + JSON.stringify(bids, null, 2));
+    var targeting = {
+        "country_targets": [],
+        "dma_target": [],
+        "placement_targets": [
+            {
+                "weight": 2,
+                "_id": "553176cb469cbc6e40e28688"
+            }
+        ]
+    };
+    var base_bid = 5;
+    var max_bid = 9;
     for (var i=0; i<bids.length; i++){
-        // TODO: validate a bid before deciding to put an amount on it
         bids.bid(i,bids[i].availableCreatives[0],amount,1); // spotId, creativeIndex, price, priority
     }
     agent.doBid(auctionId, bids, {}, wcm); // auction id, collection of bids, meta, win cost model.
