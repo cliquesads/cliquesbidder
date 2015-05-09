@@ -1,34 +1,13 @@
-var RTBkit = require('./../rtbkit/bin/rtb'),
-    services_lib = require('./../rtbkit/bin/services'),
-    budgetController = require('./budget-controller'),
-    agentConfig = require('./nodebidagent-config').config;
-    //config = require('config'),
-    //winston = require('winston'),
-    //node_utils = require('cliques_node_utils');
-    //googleAuth = node_utils.google.auth;
+#!$HOME/repositories/cliquesbidder/rtbkit/bin/node
 
-/* -------------------  LOGGING ------------------- */
+var RTBkit = require('./../rtbkit/bin/rtb');
+var services_lib = require('./../rtbkit/bin/services');
+var budgetController = require('./budget-controller');
 
-//var logfile = path.join(
-//    process.env['HOME'],
-//    'rtbkit_logs',
-//    'nodebidagent',
-//    util.format('nodebidagent_%s.log',node_utils.dates.isoFormatUTCNow())
-//);
+var agentConfig = require('./nodebidagent-config').config;
+var targetingConfig = require('./agent_targeting_config');
 
-//var bq_config = bigQueryUtils.loadFullBigQueryConfig('../bq_config.json');
-//var eventStreamer = new bigQueryUtils.BigQueryEventStreamer(bq_config,
-//    googleAuth.DEFAULT_JWT_SECRETS_FILE,20);
-//logger = new logging.BidderCLogger({
-//    transports: [
-//        new (winston.transports.Console)({timestamp:true}),
-//        new (winston.transports.File)({filename:logfile,timestamp:true})
-//        //new (winston.transports.RedisEventCache)({ eventStreamer: eventStreamer})
-//    ]
-//});
-
-
-/* ------------------ RTBKit Vars --------------------*/
+/* ------------------ RTBKit Vars & Services --------------------*/
 
 var zookeeperUri = "localhost:2181", // must point to same Zookeeper as routers
     services = new services_lib.ServiceProxies(),
@@ -70,13 +49,40 @@ var pace = function(){
   budgetController.topupTransferSync(accountFullName, "USD/1M", 100000, topupErrorHandler);
 };
 
+//----------------------------
+// Agent Init & Event Handlers
+//----------------------------
+
 var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
-
-//---------------------
-// Agent Event Handlers 
-//---------------------
-
 // You can skip overriding some of these handlers by setting strictMode(false);
+
+
+/**
+ * Linearly modifies an original starting bid according to weights specified
+ * in targeting config, and value of given parameter present in bid request
+ *
+ * Assumes "modifiers" is campaign config field value composed by the
+ * "weightTargetingSchema" in mongoose Models.
+ *
+ * @param bid
+ * @param requestValue
+ * @param modifiers
+ */
+function modifyBid(bid, requestValue, modifiers){
+    // first filter modifiers to see if
+    var filtered = modifiers.filter(function(obj){
+        return obj._id == requestValue;
+    });
+
+    if (filtered.length == 1){
+        return bid * filtered.weight;
+    } else if (filtered.length == 0){
+        return bid;
+    } else {
+        console.log("ERROR: multiple matching criteria found in modifiers: "
+        + JSON.stringify(filtered));
+    }
+}
 
 /**
  * Handles the actual bidding part.
@@ -89,21 +95,39 @@ var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
  * @param wcm
  */
 agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvailableMs, augmentations, wcm){
-    var amount = new RTBkit.USD_CPM(5);
-    //var targeting = {
-    //    "country_targets": [],
-    //    "dma_target": [],
-    //    "placement_targets": [
-    //        {
-    //            "weight": 2,
-    //            "_id": "553176cb469cbc6e40e28688"
-    //        }
-    //    ]
-    //};
-    //var base_bid = 5;
-    //var max_bid = 9;
+    // Loop over bids in case there are multiple "spots" per bid request
+    // Currently, there are not, Cliques Exchange is set up to send one "spot"
+    // (i.e. placement) per bid request, so this is a bit unnecessary.
+    // But keeping this in here for future use in case this changes.
     for (var i=0; i<bids.length; i++){
-        bids.bid(i,bids[i].availableCreatives[0],amount,1); // spotId, creativeIndex, price, priority
+
+        var spot = bid_request.spots[i];
+        var placementId = spot.tagid;
+
+        // Start linearly modifying bids
+        var bid = targetingConfig.base_bid;
+        bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
+        bid = modifyBid(bid, bidRequest.location.metro, targetingConfig.dma_targets);
+        bid = modifyBid(bid, bidRequest.location.countryCode, targetingConfig.country_targets);
+        // cap at maxbid
+        bid = Math.min(bid, targetingConfig.max_bid);
+
+        // convert to RTBKit currency object
+        var amount = new RTBkit.USD_CPM(bid);
+
+        // Take first creative from list of avail creatives, since
+        // "creatives" here are really creative groups, and there should only
+        // be one creative group per size per campaign
+        var creativeIndex = bids[i].availableCreatives[0];
+
+        var priority = 1; //I'm not really sure how core handles this, but default to 1
+
+        // This part feels a little weird, unclear how this "bids" object is
+        // supposed to behave, but you have to do this b/c agent.doBid only accepts
+        // bids object which has been validated using the "bid" call.
+        // The explanation for the C++ analog of this method is here:
+        // https://github.com/rtbkit/rtbkit/wiki/How-to-write-a-bidding-agent
+        bids.bid(i,creativeIndex, amount, priority); // spotId, creativeIndex, price, priority
     }
     agent.doBid(auctionId, bids, {}, wcm); // auction id, collection of bids, meta, win cost model.
     amount = null;
@@ -115,115 +139,115 @@ agent.onError = function(timestamp, description, message){
 
 // the agent won a bid. secondPrice contains the win price
 agent.onWin = function(timestamp, confidence, auctionId, spotNum, secondPrice, bidRequest, ourBid, accountInfo, metadata, augmentations, uids){
-  //logger.info("WIN", {
-  //    type: "WIN",
-  //    timestamp: timestamp,
-  //    confidence: confidence,
-  //    auctionId: auctionId,
-  //    spotNum: spotNum,
-  //    secondPrice: secondPrice,
-  //    bidRequest: bidRequest,
-  //    ourBid: ourBid,
-  //    accountInfo: accountInfo,
-  //    metadata: metadata,
-  //    augmentations: augmentations,
-  //    uids: uids
-  //});
-  console.log("WIN");
+  var meta = {
+      type: "WIN",
+      timestamp: timestamp,
+      confidence: confidence,
+      auctionId: auctionId,
+      spotNum: spotNum,
+      secondPrice: secondPrice,
+      bidRequest: bidRequest,
+      ourBid: ourBid,
+      accountInfo: accountInfo,
+      metadata: metadata,
+      augmentations: augmentations,
+      uids: uids
+  };
+  console.log("WIN :" + JSON.stringify(meta));
 };
 
 // the auction was not won by this agent
 agent.onLoss = function(timestamp, confidence, auctionId, spotNum, secondPrice, bidRequest, ourBid, accountInfo, metadata){
-    //logger.info("LOSS", {
-    //    type: "LOSS",
-    //    timestamp: timestamp,
-    //    confidence: confidence,
-    //    auctionId: auctionId,
-    //    spotNum: spotNum,
-    //    secondPrice: secondPrice,
-    //    bidRequest: bidRequest,
-    //    ourBid: ourBid,
-    //    accountInfo: accountInfo,
-    //    metadata: metadata
-    //});
-    console.log("LOSS");
+    var meta = {
+        type: "LOSS",
+        timestamp: timestamp,
+        confidence: confidence,
+        auctionId: auctionId,
+        spotNum: spotNum,
+        secondPrice: secondPrice,
+        bidRequest: bidRequest,
+        ourBid: ourBid,
+        accountInfo: accountInfo,
+        metadata: metadata
+    };
+    console.log("LOSS :" + JSON.stringify(meta));
 };
 
 // an invalid bid has been sent back to the router
 agent.onInvalidBid = function(timestamp, confidence, auctionId, spotNum, secondPrice, bidRequest, ourBid, accountInfo, metadata, augmentations, uids){
-    //logger.info("INVALID-BID", {
-    //    type: "INVALID-BID",
-    //    timestamp: timestamp,
-    //    confidence: confidence,
-    //    auctionId: auctionId,
-    //    spotNum: spotNum,
-    //    secondPrice: secondPrice,
-    //    bidRequest: bidRequest,
-    //    ourBid: ourBid,
-    //    accountInfo: accountInfo,
-    //    metadata: metadata,
-    //    augmentations: augmentations,
-    //    uids: uids
-    //});
-    console.log("INVALID-BID");
+    var meta = {
+        type: "INVALID-BID",
+        timestamp: timestamp,
+        confidence: confidence,
+        auctionId: auctionId,
+        spotNum: spotNum,
+        secondPrice: secondPrice,
+        bidRequest: bidRequest,
+        ourBid: ourBid,
+        accountInfo: accountInfo,
+        metadata: metadata,
+        augmentations: augmentations,
+        uids: uids
+    };
+    console.log("INVALID-BID :" + JSON.stringify(meta));
 };
 
 // a bid was placed by this bid agent after the router had sent its bids back to the exchange
 agent.onTooLate = function(timestamp, confidence, auctionId, spotNum, secondPrice, bidRequest, ourBid, accountInfo, metadata, augmentations, uids){
-    //logger.info("TOO-LATE", {
-    //    type: "TOO-LATE",
-    //    timestamp: timestamp,
-    //    confidence: confidence,
-    //    auctionId: auctionId,
-    //    spotNum: spotNum,
-    //    secondPrice: secondPrice,
-    //    bidRequest: bidRequest,
-    //    ourBid: ourBid,
-    //    accountInfo: accountInfo,
-    //    metadata: metadata,
-    //    augmentations: augmentations,
-    //    uids: uids
-    //});
-    console.log("TOO-LATE");
+    var meta = {
+        type: "TOO-LATE",
+        timestamp: timestamp,
+        confidence: confidence,
+        auctionId: auctionId,
+        spotNum: spotNum,
+        secondPrice: secondPrice,
+        bidRequest: bidRequest,
+        ourBid: ourBid,
+        accountInfo: accountInfo,
+        metadata: metadata,
+        augmentations: augmentations,
+        uids: uids
+    };
+    console.log("TOO-LATE:" + JSON.stringify(meta));
 };
 
 // not sufficient budget available for this agent to bid the price it has chosen
 agent.onNoBudget = function(timestamp, confidence, auctionId, spotNum, secondPrice, bidRequest, ourBid, accountInfo, metadata, augmentations, uids){
-    //logger.info("NO-BUDGET", {
-    //    type: "NO-BUDGET",
-    //    timestamp: timestamp,
-    //    confidence: confidence,
-    //    auctionId: auctionId,
-    //    spotNum: spotNum,
-    //    secondPrice: secondPrice,
-    //    bidRequest: bidRequest,
-    //    ourBid: ourBid,
-    //    accountInfo: accountInfo,
-    //    metadata: metadata,
-    //    augmentations: augmentations,
-    //    uids: uids
-    //});
-    console.log("NO-BUDGET");
+    var meta = {
+        type: "NO-BUDGET",
+        timestamp: timestamp,
+        confidence: confidence,
+        auctionId: auctionId,
+        spotNum: spotNum,
+        secondPrice: secondPrice,
+        bidRequest: bidRequest,
+        ourBid: ourBid,
+        accountInfo: accountInfo,
+        metadata: metadata,
+        augmentations: augmentations,
+        uids: uids
+    };
+    console.log("NO-BUDGET:" + JSON.stringify(meta));
 };
 
 // the auction dropped this bid. usually happens if the auctionId is unknown
 // or if the bid was delayed for too long.
 agent.onDroppedBid = function(timestamp, confidence, auctionId, spotNum, secondPrice, bidRequest, ourBid, accountInfo, metadata, augmentations, uids){
-    //logger.info("DROPPED-BID", {
-    //    type: "DROPPED-BID",
-    //    timestamp: timestamp,
-    //    confidence: confidence,
-    //    auctionId: auctionId,
-    //    spotNum: spotNum,
-    //    secondPrice: secondPrice,
-    //    bidRequest: bidRequest,
-    //    ourBid: ourBid,
-    //    accountInfo: accountInfo,
-    //    metadata: metadata,
-    //    augmentations: augmentations,
-    //    uids: uids
-    //});
-    console.log("DROPPED-BID");
+    var meta = {
+        type: "DROPPED-BID",
+        timestamp: timestamp,
+        confidence: confidence,
+        auctionId: auctionId,
+        spotNum: spotNum,
+        secondPrice: secondPrice,
+        bidRequest: bidRequest,
+        ourBid: ourBid,
+        accountInfo: accountInfo,
+        metadata: metadata,
+        augmentations: augmentations,
+        uids: uids
+    };
+    console.log("DROPPED-BID:" + JSON.stringify(meta));
 };
 
 // respond to the router when pinged.
