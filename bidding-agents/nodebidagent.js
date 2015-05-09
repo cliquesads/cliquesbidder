@@ -101,7 +101,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     // But keeping this in here for future use in case this changes.
     for (var i=0; i<bids.length; i++){
 
-        var spot = bid_request.spots[i];
+        var spot = bidRequest.spots[i];
         var placementId = spot.tagid;
 
         // Start linearly modifying bids
