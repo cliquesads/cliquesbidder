@@ -5,7 +5,7 @@ var services_lib = require('./../rtbkit/bin/services');
 var budgetController = require('./budget-controller');
 
 var agentConfig = require('./nodebidagent-config').config;
-var targetingConfig = require('./agent_targeting_config');
+var targetingConfig = require('./agent_targeting_config').config;
 
 /* ------------------ RTBKit Vars & Services --------------------*/
 
