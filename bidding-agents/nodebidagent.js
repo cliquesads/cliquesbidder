@@ -89,19 +89,19 @@ var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
  * @param wcm
  */
 agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvailableMs, augmentations, wcm){
-    var amount = new RTBkit.MicroUSD(100);
-    var targeting = {
-        "country_targets": [],
-        "dma_target": [],
-        "placement_targets": [
-            {
-                "weight": 2,
-                "_id": "553176cb469cbc6e40e28688"
-            }
-        ]
-    };
-    var base_bid = 5;
-    var max_bid = 9;
+    var amount = new RTBkit.USD_CPM(5);
+    //var targeting = {
+    //    "country_targets": [],
+    //    "dma_target": [],
+    //    "placement_targets": [
+    //        {
+    //            "weight": 2,
+    //            "_id": "553176cb469cbc6e40e28688"
+    //        }
+    //    ]
+    //};
+    //var base_bid = 5;
+    //var max_bid = 9;
     for (var i=0; i<bids.length; i++){
         bids.bid(i,bids[i].availableCreatives[0],amount,1); // spotId, creativeIndex, price, priority
     }
