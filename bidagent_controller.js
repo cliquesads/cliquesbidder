@@ -100,9 +100,15 @@ mongo_connection.once('open', function(callback){
     var advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
     advertiserModels.getNestedObjectById('553176cb469cbc6e40e28687', 'Campaign', function(err, campaign){
         var config_objs = getAgentConfig(campaign.parent_advertiser, campaign);
+
         var agent = child_process.spawn('./rtbkit/bin/node ./bidding-agents/nodebidagent.js',
             [JSON.stringify(config_objs[0]), JSON.stringify(config_objs[1]), JSON.stringify(env_config)]);
+
         agent.stdout.on('data', function(data){
+            console.log(data);
+        });
+        
+        agent.stderr.on('data', function(data){
             console.log(data);
         });
     });
