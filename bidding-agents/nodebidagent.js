@@ -5,9 +5,9 @@ var services_lib = require('./../rtbkit/bin/services');
 var budgetController = require('./budget-controller');
 
 //Parse configs from args
-var agentConfig = JSON.parse(process.argv[0]);
-var targetingConfig = JSON.parse(process.argv[1]);
-var envConfig = JSON.parse(process.argv[2]);
+var agentConfig = JSON.parse(decodeURIComponent(process.argv[0]));
+var targetingConfig = JSON.parse(decodeURIComponent(process.argv[1]));
+var envConfig = JSON.parse(decodeURIComponent(process.argv[2]));
 //var agentConfig = require('./nodebidagent-config').config;
 //var targetingConfig = require('./agent_targeting_config').config;
 
