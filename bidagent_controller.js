@@ -5,6 +5,7 @@ var googleAuth = node_utils.google.auth;
 var logging = require('./lib/bidder_logging.js');
 
 var config = require('config');
+var path = require('path');
 var winston = require('winston');
 var util = require('util');
 var fs = require('fs');
