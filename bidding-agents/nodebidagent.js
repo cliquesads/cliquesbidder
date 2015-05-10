@@ -4,12 +4,16 @@ var RTBkit = require('./../rtbkit/bin/rtb');
 var services_lib = require('./../rtbkit/bin/services');
 var budgetController = require('./budget-controller');
 
-var agentConfig = require('./nodebidagent-config').config;
-var targetingConfig = require('./agent_targeting_config').config;
+//Parse configs from args
+var agentConfig = JSON.parse(process.argv[0]);
+var targetingConfig = JSON.parse(process.argv[1]);
+var envConfig = JSON.parse(process.argv[2]);
+//var agentConfig = require('./nodebidagent-config').config;
+//var targetingConfig = require('./agent_targeting_config').config;
 
 /* ------------------ RTBKit Vars & Services --------------------*/
 
-var zookeeperUri = "localhost:2181", // must point to same Zookeeper as routers
+var zookeeperUri = envConfig[zookeeperUri], // must point to same Zookeeper as routers
     services = new services_lib.ServiceProxies(),
     accountAdded = false,
     interval,
@@ -17,10 +21,9 @@ var zookeeperUri = "localhost:2181", // must point to same Zookeeper as routers
     accountFullName = agentConfig.account.join(":");
     
 // uri,install name and location from bootstrap.json
-services.useZookeeper(zookeeperUri,"rtb-test", "mtl"); 
-
+services.useZookeeper(zookeeperUri,"rtb-test", "mtl");
 // yes, we want to log to carbon
-services.logToCarbon('127.0.0.1:2003');
+services.logToCarbon(envConfig["carbon-uri"]);
 
 var addAccountHandler = function(err, res){
   if (err) {
