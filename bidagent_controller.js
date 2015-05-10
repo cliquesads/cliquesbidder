@@ -91,23 +91,28 @@ function getAgentConfig(advertiser, campaign, options){
 }
 
 var bootstrap_config = JSON.parse(jsonminify(fs.readFileSync('./config/rtbkit/bootstrap.json', 'utf8')));
-var env_config = {
+var env_config = JSON.stringify({
     "zookeeper-uri": bootstrap_config["zookeeper-uri"],
     "carbon-uri": bootstrap_config["carbon-uri"]
-};
+});
 
 mongo_connection.once('open', function(callback){
     var advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
     advertiserModels.getNestedObjectById('553176cb469cbc6e40e28687', 'Campaign', function(err, campaign){
         var config_objs = getAgentConfig(campaign.parent_advertiser, campaign);
+        var agentConfig = JSON.stringify(config_objs[0]);
+        var targetingConfig = JSON.stringify(config_objs[1]);
 
-        var agent = child_process.spawn('./rtbkit/bin/node ./bidding-agents/nodebidagent.js',
-            [JSON.stringify(config_objs[0]), JSON.stringify(config_objs[1]), JSON.stringify(env_config)]);
+        console.log(agentConfig);
+        console.log(targetingConfig);
+        console.log(env_config);
+
+        var agent = child_process.spawn('./rtbkit/bin/node ./bidding-agents/nodebidagent.js',[agentConfig,targetingConfig, env_config]);
 
         agent.stdout.on('data', function(data){
             console.log(data);
         });
-        
+
         agent.stderr.on('data', function(data){
             console.log(data);
         });
