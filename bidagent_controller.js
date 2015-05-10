@@ -66,10 +66,11 @@ function getAgentConfig(advertiser, campaign, options){
         creatives: []
     };
     // push creatives into config
-    campaign.creativegroups.forEach(function(crg){
+    for (var i=0; i < campaign.creativegroups.length; i++){
+        var crg = campaign.creativegroups.length;
         agentConfig.creatives.push({
             format: { width: crg.w, height: crg.h },
-            id: crg.id,
+            id: i,
             name: crg.name,
             tagId: crg.id, //don't know why this is necessary, don't even know what it means
             providerConfig: {
@@ -79,7 +80,7 @@ function getAgentConfig(advertiser, campaign, options){
                 }
             }
         });
-    });
+    }
     var targeting_config = {
         base_bid: campaign.base_bid,
         max_bid: campaign.max_bid,
