@@ -74,8 +74,8 @@ function getAgentConfig(advertiser, campaign, options){
             tagId: crg.id, //don't know why this is necessary, don't even know what it means
             providerConfig: {
                 cliques: {
-                    adm: tag.render(crg),
-                    adomain: [advertiser.website]
+                    adm: encodeURIComponent(tag.render(crg)), //have to do this or else can't parse JSON properly
+                    adomain: [encodeURIComponent(advertiser.website)] //have to do this or else can't parse JSON properly
                 }
             }
         });
@@ -91,10 +91,10 @@ function getAgentConfig(advertiser, campaign, options){
 }
 
 var bootstrap_config = JSON.parse(jsonminify(fs.readFileSync('./config/rtbkit/bootstrap.json', 'utf8')));
-var env_config = encodeURIComponent(JSON.stringify({
+var env_config = JSON.stringify({
     "zookeeper-uri": bootstrap_config["zookeeper-uri"],
     "carbon-uri": bootstrap_config["carbon-uri"]
-}));
+});
 
 mongo_connection.once('open', function(callback){
     var advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
@@ -102,8 +102,8 @@ mongo_connection.once('open', function(callback){
 
         var config_objs = getAgentConfig(campaign.parent_advertiser, campaign);
 
-        var agentConfig = encodeURIComponent(JSON.stringify(config_objs[0]));
-        var targetingConfig = encodeURIComponent(JSON.stringify(config_objs[1]));
+        var agentConfig = JSON.stringify(config_objs[0]);
+        var targetingConfig = JSON.stringify(config_objs[1]);
 
         console.log(agentConfig);
         console.log(targetingConfig);
