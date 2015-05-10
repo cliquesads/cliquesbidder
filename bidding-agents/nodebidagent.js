@@ -19,7 +19,7 @@ var envConfig = JSON.parse(process.argv[4]);
 
 /* ------------------ RTBKit Vars & Services --------------------*/
 
-var zookeeperUri = envConfig[zookeeperUri], // must point to same Zookeeper as routers
+var zookeeperUri = envConfig["zookeeper-uri"], // must point to same Zookeeper as routers
     services = new services_lib.ServiceProxies(),
     accountAdded = false,
     interval,
