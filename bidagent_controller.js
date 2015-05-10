@@ -12,8 +12,6 @@ var fs = require('fs');
 var jsonminify = require('jsonminify');
 var child_process = require('child_process');
 
-//var googlepis = require('googleapis');
-
 var logfile = path.join(
     process.env['HOME'],
     'rtbkit_logs',
@@ -131,6 +129,7 @@ mongo_connection.once('open', function(callback){
         // spawn child process, i.e. spin up new bidding agent
         var agent = child_process.spawn('./bidding-agents/nodebidagent.js',[agentConfig,targetingConfig, env_config]);
 
+        // handle stdout
         agent.stdout.on('data', function(data){
             var logline = data.toString();
             // hacky, I know.
@@ -145,6 +144,7 @@ mongo_connection.once('open', function(callback){
             }
         });
 
+        // handle stderr
         agent.stderr.on('data', function(data){
             console.log(data.toString());
         });
