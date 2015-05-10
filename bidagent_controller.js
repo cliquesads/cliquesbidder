@@ -139,7 +139,7 @@ mongo_connection.once('open', function(callback){
                 var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
 
                 // call logger method, pass campaign and advertiser in.
-                logger.bid(meta, campaign, advertiser);
+                logger.bid(meta, campaign, campaign.parent_advertiser);
             } else {
                 console.log(data.toString());
             }
