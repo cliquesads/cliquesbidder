@@ -118,16 +118,19 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         // be one creative group per size per campaign
         var creativeIndex = bids[i].availableCreatives[0];
 
+        // assume imp indexing is identical to spot indexing?
+        var impid = bidRequest.imp[i].id;
+
         // Handle logging to parent here real quick
         // have to do most of the hardwork for logging here
         var meta = {
             uuid: bidRequest.user.id,
             auctionId: auctionId,
-            bidid: [auctionId, bidRequest.imp.id].join(':'),
-            impid: bidRequest.imp.id,
+            bidid: [auctionId, impid].join(':'),
+            impid: impid,
             bid: bid,
             placement: spot.tagid,
-            creativegroup: agentConfig.creatives[creativeIndex].tagId
+            creative_group: agentConfig.creatives[creativeIndex].tagId
         };
         // this is super hacky and I don't like it, but it works. Im sorry.
         console.log('BID ' + JSON.stringify(meta));
