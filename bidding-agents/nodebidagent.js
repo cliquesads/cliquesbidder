@@ -1,4 +1,4 @@
-#!./rtbkit/bin/node
+#!/usr/bin/rtbkit-node
 
 var RTBkit = require('./../rtbkit/bin/rtb');
 var services_lib = require('./../rtbkit/bin/services');
