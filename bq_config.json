@@ -1,6 +1,6 @@
 {
   "event_tables":{
-    "BIDS": {
+    "BID": {
       "tableId": "bids",
       "datasetId": "ad_events",
       "schema": {
