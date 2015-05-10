@@ -67,7 +67,7 @@ function getAgentConfig(advertiser, campaign, options){
     };
     // push creatives into config
     campaign.creativegroups.forEach(function(crg){
-        config.creatives.push({
+        agentConfig.creatives.push({
             format: { width: crg.w, height: crg.h },
             id: crg.id,
             name: crg.name,
