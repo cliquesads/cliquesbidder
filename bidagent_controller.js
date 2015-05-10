@@ -23,7 +23,7 @@ var logfile = path.join(
 var bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config.json');
 var eventStreamer = new bigQueryUtils.BigQueryEventStreamer(bq_config,
     googleAuth.DEFAULT_JWT_SECRETS_FILE,20);
-logger = new logging.AdServerCLogger({
+logger = new logging.BidderCLogger({
     transports: [
         new (winston.transports.Console)({timestamp:true}),
         new (winston.transports.File)({filename:logfile,timestamp:true}),
