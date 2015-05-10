@@ -1,4 +1,4 @@
-#!$HOME/repositories/cliquesbidder/rtbkit/bin/node
+#!./rtbkit/bin/node
 
 var RTBkit = require('./../rtbkit/bin/rtb');
 var services_lib = require('./../rtbkit/bin/services');
