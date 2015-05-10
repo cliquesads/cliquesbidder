@@ -22,7 +22,7 @@ var mongoOptions = {
 };
 var mongo_connection = node_utils.mongodb.createConnectionWrapper(mongoURI, mongoOptions, function(err, logstring){
     if (err) throw err;
-    logger.info(logstring);
+    console.log(logstring);
 });
 
 
