@@ -97,7 +97,7 @@ var env_config = {
 };
 
 mongo_connection.once('open', function(callback){
-    var advertiserModels = node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
+    var advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
     advertiserModels.getNestedObjectById('553176cb469cbc6e40e28687', 'Campaign', function(err, campaign){
         var config_objs = getAgentConfig(campaign.parent_advertiser, campaign);
         var agent = child_process.spawn('./rtbkit/bin/node ./bidding-agents/nodebidagent.js',
