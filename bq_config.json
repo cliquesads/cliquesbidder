@@ -11,7 +11,6 @@
           {"name": "tstamp","type": "TIMESTAMP"},
           {"name": "uuid","type": "STRING"},
           {"name": "auctionId","type": "STRING"},
-          {"name": "bidobjid","type": "STRING"},
           {"name": "bidid","type": "STRING"},
           {"name": "impid","type": "STRING"},
           {"name": "bid","type": "FLOAT"},

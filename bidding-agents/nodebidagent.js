@@ -6,16 +6,8 @@ var budgetController = require('./budget-controller');
 
 //Parse configs from args
 var agentConfig = JSON.parse(process.argv[2]);
-//decode non-parseable items in creative markup & url.
-//agentConfig.creatives.forEach(function(creative){
-//    creative.adm = decodeURIComponent(creative.adm);
-//    creative.adomain = [decodeURIComponent(creative.adomain[0])]
-//});
-
 var targetingConfig = JSON.parse(process.argv[3]);
 var envConfig = JSON.parse(process.argv[4]);
-//var agentConfig = require('./nodebidagent-config').config;
-//var targetingConfig = require('./agent_targeting_config').config;
 
 /* ------------------ RTBKit Vars & Services --------------------*/
 
@@ -121,13 +113,27 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         // cap at maxbid
         bid = Math.min(bid, targetingConfig.max_bid);
 
-        // convert to RTBKit currency object
-        var amount = new RTBkit.USD_CPM(bid);
-
         // Take first creative from list of avail creatives, since
         // "creatives" here are really creative groups, and there should only
         // be one creative group per size per campaign
         var creativeIndex = bids[i].availableCreatives[0];
+
+        // Handle logging to parent here real quick
+        // have to do most of the hardwork for logging here
+        var meta = {
+            uuid: bidRequest.user.id,
+            auctionId: auctionId,
+            bidid: [auctionId, bidRequest.imp.id].join(':'),
+            impid: bidRequest.imp.id,
+            bid: bid,
+            placement: spot.tagid,
+            creativegroup: agentConfig.creatives[creativeIndex].tagId
+        };
+        // this is super hacky and I don't like it, but it works. Im sorry.
+        console.log('BID ' + JSON.stringify(meta));
+
+        // convert to RTBKit currency object
+        var amount = new RTBkit.USD_CPM(bid);
 
         var priority = 1; //I'm not really sure how core handles this, but default to 1
 

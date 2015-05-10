@@ -47,7 +47,7 @@ BudgetController.addAccount = function(account, callback){
 // topupTransferSync does a PUT {currency:amount} 
 // to /v1/accounts/<account>/balance?accountType=budget
 BudgetController.topupTransferSync = function(account, currency, amount, callback){
-  console.log('topping up');
+  //console.log('topping up');
   var put_data = '{"'+currency+'":'+amount+'}';
   var req = http.request({
     port : default_port,

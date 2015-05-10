@@ -1,5 +1,9 @@
 var node_utils = require('cliques_node_utils');
 var tags = node_utils.tags;
+var bigQueryUtils = node_utils.google.bigQueryUtils;
+var googleAuth = node_utils.google.auth;
+var logging = require('./lib/bidder_logging.js');
+
 var config = require('config');
 var winston = require('winston');
 var util = require('util');
@@ -8,6 +12,23 @@ var jsonminify = require('jsonminify');
 var child_process = require('child_process');
 
 //var googlepis = require('googleapis');
+
+var logfile = path.join(
+    process.env['HOME'],
+    'rtbkit_logs',
+    'nodebidagent',
+    util.format('bidagent_%s.log',node_utils.dates.isoFormatUTCNow())
+);
+var bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config.json');
+var eventStreamer = new bigQueryUtils.BigQueryEventStreamer(bq_config,
+    googleAuth.DEFAULT_JWT_SECRETS_FILE,20);
+logger = new logging.AdServerCLogger({
+    transports: [
+        new (winston.transports.Console)({timestamp:true}),
+        new (winston.transports.File)({filename:logfile,timestamp:true}),
+        new (winston.transports.RedisEventCache)({ eventStreamer: eventStreamer})
+    ]
+});
 
 /*------------------- MONGO CONNECTION ----------------*/
 
@@ -24,7 +45,6 @@ var mongo_connection = node_utils.mongodb.createConnectionWrapper(mongoURI, mong
     if (err) throw err;
     console.log(logstring);
 });
-
 
 /* ----- Helpers to convert advertiser document into config ------ */
 
@@ -100,24 +120,30 @@ var env_config = JSON.stringify({
 mongo_connection.once('open', function(callback){
     var advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
     advertiserModels.getNestedObjectById('553176cb469cbc6e40e28687', 'Campaign', function(err, campaign){
-
         var config_objs = getAgentConfig(campaign.parent_advertiser, campaign);
-
         var agentConfig = JSON.stringify(config_objs[0]);
         var targetingConfig = JSON.stringify(config_objs[1]);
 
-        console.log(agentConfig);
-        console.log(targetingConfig);
-        console.log(env_config);
-
+        // spawn child process, i.e. spin up new bidding agent
         var agent = child_process.spawn('./bidding-agents/nodebidagent.js',[agentConfig,targetingConfig, env_config]);
 
         agent.stdout.on('data', function(data){
-            console.log(data.toString());
+            var logline = data.toString();
+            // hacky, I know.
+            // log using bid method if logline begins with 'BID: '
+            if (logline.indexOf(logging.BID_PREFIX) === 0){
+                var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
+
+                // call logger method, pass campaign and advertiser in.
+                logger.bid(meta, campaign, advertiser);
+            } else {
+                console.log(data.toString());
+            }
         });
 
         agent.stderr.on('data', function(data){
             console.log(data.toString());
         });
+
     });
 });
