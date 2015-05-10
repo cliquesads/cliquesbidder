@@ -4,6 +4,7 @@ var config = require('config');
 var winston = require('winston');
 var util = require('util');
 var fs = require('fs');
+var jsonminify = require('jsonminify');
 var child_process = require('child_process');
 
 //var googlepis = require('googleapis');
@@ -89,7 +90,7 @@ function getAgentConfig(advertiser, campaign, options){
     return [agentConfig, targeting_config];
 }
 
-var bootstrap_config = JSON.parse(fs.readFileSync('./config/rtbkit/bootstrap.json', 'utf8'));
+var bootstrap_config = JSON.parse(jsonminify(fs.readFileSync('./config/rtbkit/bootstrap.json', 'utf8')));
 var env_config = {
     "zookeeper-uri": bootstrap_config["zookeeper-uri"],
     "carbon-uri": bootstrap_config["carbon-uri"]
