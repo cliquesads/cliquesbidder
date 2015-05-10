@@ -26,7 +26,10 @@ logger = new logging.AdServerCLogger({
     transports: [
         new (winston.transports.Console)({timestamp:true}),
         new (winston.transports.File)({filename:logfile,timestamp:true}),
-        new (winston.transports.RedisEventCache)({ eventStreamer: eventStreamer})
+        new (winston.transports.RedisEventCache)({
+            eventStreamer: eventStreamer,
+            redis_port: 6380 }
+        )
     ]
 });
 
