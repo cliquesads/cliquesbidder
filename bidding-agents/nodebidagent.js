@@ -5,15 +5,15 @@ var services_lib = require('./../rtbkit/bin/services');
 var budgetController = require('./budget-controller');
 
 //Parse configs from args
-var agentConfig = JSON.parse(process.argv[1]);
+var agentConfig = JSON.parse(process.argv[2]);
 //decode non-parseable items in creative markup & url.
 //agentConfig.creatives.forEach(function(creative){
 //    creative.adm = decodeURIComponent(creative.adm);
 //    creative.adomain = [decodeURIComponent(creative.adomain[0])]
 //});
 
-var targetingConfig = JSON.parse(process.argv[2]);
-var envConfig = JSON.parse(process.argv[3]);
+var targetingConfig = JSON.parse(process.argv[3]);
+var envConfig = JSON.parse(process.argv[4]);
 //var agentConfig = require('./nodebidagent-config').config;
 //var targetingConfig = require('./agent_targeting_config').config;
 
