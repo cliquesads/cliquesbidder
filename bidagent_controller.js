@@ -112,11 +112,11 @@ mongo_connection.once('open', function(callback){
         var agent = child_process.spawn('./bidding-agents/nodebidagent.js',[agentConfig,targetingConfig, env_config]);
 
         agent.stdout.on('data', function(data){
-            console.log(data);
+            console.log(data.toString());
         });
 
         agent.stderr.on('data', function(data){
-            console.log(data);
+            console.log(data.toString());
         });
     });
 });
