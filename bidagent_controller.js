@@ -74,8 +74,8 @@ function getAgentConfig(advertiser, campaign, options){
             tagId: crg.id, //don't know why this is necessary, don't even know what it means
             providerConfig: {
                 cliques: {
-                    adm: encodeURIComponent(tag.render(crg)), //have to do this or else can't parse JSON properly
-                    adomain: [encodeURIComponent(advertiser.website)] //have to do this or else can't parse JSON properly
+                    adm: tag.render(crg),
+                    adomain: [advertiser.website]
                 }
             }
         });
