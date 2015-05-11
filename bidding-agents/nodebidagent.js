@@ -76,7 +76,7 @@ function modifyBid(bid, requestValue, modifiers){
     });
     console.log("Filtered targeting objects: " + JSON.stringify(filtered, null,2));
     if (filtered.length == 1){
-        var new_bid = bid * filtered.weight;
+        var new_bid = bid * filtered[0].weight;
         console.log("Modified bid: " + new_bid);
         return new_bid
     } else if (filtered.length == 0){
