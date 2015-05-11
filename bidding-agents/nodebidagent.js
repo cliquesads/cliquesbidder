@@ -74,7 +74,7 @@ function modifyBid(bid, requestValue, modifiers){
     var filtered = modifiers.filter(function(obj){
         return obj._id == requestValue;
     });
-    console.log("Filtered targeting objects: " + filtered);
+    console.log("Filtered targeting objects: " + JSON.stringify(filtered, null,2));
     if (filtered.length == 1){
         var new_bid = bid * filtered.weight;
         console.log("Modified bid: " + new_bid);
@@ -109,7 +109,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
 
         // Linearly modify bid, starting with base bid
         var bid = targetingConfig.base_bid;
-        console.log('Basebid' + bid);
+        console.log('Basebid: ' + bid);
         bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
         bid = modifyBid(bid, bidRequest.location.metro, targetingConfig.dma_targets);
         bid = modifyBid(bid, bidRequest.location.countryCode, targetingConfig.country_targets);
