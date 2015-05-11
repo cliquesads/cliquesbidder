@@ -105,7 +105,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         var spot = bidRequest.spots[i];
         var placementId = spot.tagid;
 
-        // Start linearly modifying bids
+        // Linearly modify bid, starting with base bid
         var bid = targetingConfig.base_bid;
         bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
         bid = modifyBid(bid, bidRequest.location.metro, targetingConfig.dma_targets);
