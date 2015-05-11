@@ -74,9 +74,11 @@ function modifyBid(bid, requestValue, modifiers){
     var filtered = modifiers.filter(function(obj){
         return obj._id == requestValue;
     });
-
+    console.log("Filtered targeting objects: " + filtered);
     if (filtered.length == 1){
-        return bid * filtered.weight;
+        var new_bid = bid * filtered.weight;
+        console.log("Modified bid: " + new_bid);
+        return new_bid
     } else if (filtered.length == 0){
         return bid;
     } else {
@@ -107,11 +109,14 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
 
         // Linearly modify bid, starting with base bid
         var bid = targetingConfig.base_bid;
+        console.log('Basebid' + bid);
         bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
         bid = modifyBid(bid, bidRequest.location.metro, targetingConfig.dma_targets);
         bid = modifyBid(bid, bidRequest.location.countryCode, targetingConfig.country_targets);
+        console.log('Bid after modifications' + bid);
         // cap at maxbid
         bid = Math.min(bid, targetingConfig.max_bid);
+        console.log('Bid after capping:' + bid);
 
         // Take first creative from list of avail creatives, since
         // "creatives" here are really creative groups, and there should only
@@ -137,6 +142,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
 
         // convert to RTBKit currency object
         var amount = new RTBkit.USD_CPM(bid);
+        console.log("Amount after conversion to object:" + amount);
 
         var priority = 1; //I'm not really sure how core handles this, but default to 1
 
