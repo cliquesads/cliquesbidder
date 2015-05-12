@@ -74,7 +74,7 @@ var tag = new tags.ImpTag(adserver_host, { port: adserver_port });
  *      as config <-> campaign is 1-1, currently.
  * @param {Object} options
  */
-function getAgentConfig(advertiser, campaign, options){
+function parseAgentConfigFromObject(advertiser, campaign, options){
     options             = options || {};
     var maxInFlight     = options.max_in_flight || 50;
     var bidProbability  = options.bidProbability || 1.0;
@@ -123,11 +123,31 @@ function getAgentConfig(advertiser, campaign, options){
     return [agentConfig, targeting_config];
 }
 
+/**
+ * Wrapper for agent spawning/updating/messaging to get configs from
+ * message from subscription.
+ *
+ * @param campaign_id
+ * @param callback takes (err, args_array)
+ */
+function getAgentConfig(campaign_id, callback){
+    // get campaign object from DB first
+    advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign) {
+        // create config objects to pass to bidagent
+        if (err) return callback(err);
+        var config_objs = parseAgentConfigFromObject(campaign.parent_advertiser, campaign);
+        var agentConfig = JSON.stringify(config_objs[0]);
+        var targetingConfig = JSON.stringify(config_objs[1]);
+        return callback(null, [agentConfig, targetingConfig, env_config]);
+    });
+}
+
 var bootstrap_config = JSON.parse(jsonminify(fs.readFileSync('./config/rtbkit/bootstrap.json', 'utf8')));
 var env_config = JSON.stringify({
     "zookeeper-uri": bootstrap_config["zookeeper-uri"],
     "carbon-uri": bootstrap_config["carbon-uri"]
 });
+
 
 /* ---------------- BIDDER PUBSUB INSTANCE ----------------- */
 
@@ -147,24 +167,24 @@ var bidderPubSub = new pubsub.BidderPubSub(pubsub_options);
 //Path to bidagent executable script
 var BIDAGENT_EXECUTABLE = './bidding-agents/nodebidagent.js';
 
+/**
+ * Handles createBidder messages.
+ *
+ * On message, will spawn new child process, running BIDAGENT_EXECUTABLE with
+ * campaign config as args.
+ */
 bidderPubSub.subscriptions.createBidder(function(err, subscription){
+
     if (err) throw new Error('Error creating subscription to createBidder topic: ' + err);
 
     // message listener
     subscription.on('message', function(message){
         var campaign_id = message.data;
         logger.info('Received createBidder message for campaignId '+ campaign_id + ', spawning bidagent...');
-        // get campaign object from DB first
-        advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign){
 
-            // create config objects to pass to bidagent
-            var config_objs = getAgentConfig(campaign.parent_advertiser, campaign);
-            var agentConfig = JSON.stringify(config_objs[0]);
-            var targetingConfig = JSON.stringify(config_objs[1]);
-
+        getAgentConfig(campaign_id, function(err, args_array){
             // spawn child process, i.e. spin up new bidding agent
-            var agent = child_process.spawn(BIDAGENT_EXECUTABLE,
-                [agentConfig,targetingConfig, env_config]);
+            var agent = child_process.spawn(BIDAGENT_EXECUTABLE, args_array);
 
             // handle stdout
             agent.stdout.on('data', function(data){
