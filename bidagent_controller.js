@@ -3,6 +3,7 @@ var tags = node_utils.tags;
 var bigQueryUtils = node_utils.google.bigQueryUtils;
 var googleAuth = node_utils.google.auth;
 var logging = require('./lib/bidder_logging.js');
+var pubsub = node_utils.google.pubsub;
 
 var config = require('config');
 var path = require('path');
@@ -11,6 +12,9 @@ var util = require('util');
 var fs = require('fs');
 var jsonminify = require('jsonminify');
 var child_process = require('child_process');
+
+
+/* ------------------- LOGGER ------------------------ */
 
 var logfile = path.join(
     process.env['HOME'],
@@ -48,6 +52,13 @@ var mongo_connection = node_utils.mongodb.createConnectionWrapper(mongoURI, mong
     console.log(logstring);
 });
 
+// TODO: technically if subscriber gets a message before the connection opens,
+// TODO: any reference to these models will fail.
+var advertiserModels;
+mongo_connection.once('open', function(callback){
+    advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
+});
+
 /* ----- Helpers to convert advertiser document into config ------ */
 
 // instantiate tag object to use to generate ad markup for bidder configs
@@ -64,7 +75,6 @@ var tag = new tags.ImpTag(adserver_host, { port: adserver_port });
  * @param {Object} options
  */
 function getAgentConfig(advertiser, campaign, options){
-
     options             = options || {};
     var maxInFlight     = options.max_in_flight || 50;
     var bidProbability  = options.bidProbability || 1.0;
@@ -119,35 +129,67 @@ var env_config = JSON.stringify({
     "carbon-uri": bootstrap_config["carbon-uri"]
 });
 
-mongo_connection.once('open', function(callback){
-    var advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
-    advertiserModels.getNestedObjectById('553176cb469cbc6e40e28687', 'Campaign', function(err, campaign){
-        var config_objs = getAgentConfig(campaign.parent_advertiser, campaign);
-        var agentConfig = JSON.stringify(config_objs[0]);
-        var targetingConfig = JSON.stringify(config_objs[1]);
+/* ---------------- BIDDER PUBSUB INSTANCE ----------------- */
 
-        // spawn child process, i.e. spin up new bidding agent
-        var agent = child_process.spawn('./bidding-agents/nodebidagent.js',[agentConfig,targetingConfig, env_config]);
+if (process.env.NODE_ENV == 'local-test'){
+    var pubsub_options = {
+        projectId: 'mimetic-codex-781',
+        test: true,
+        logger: logger
+    }
+} else {
+    pubsub_options = {};
+}
+var bidderPubSub = new pubsub.BidderPubSub(pubsub_options);
 
-        // handle stdout
-        agent.stdout.on('data', function(data){
-            var logline = data.toString();
-            // hacky, I know.
-            // log using bid method if logline begins with 'BID: '
-            if (logline.indexOf(logging.BID_PREFIX) === 0){
-                var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
+/* ------------ REGISTER LISTENERS FOR MESSAGES ------------ */
 
-                // call logger method, pass campaign and advertiser in.
-                logger.bid(meta, campaign, campaign.parent_advertiser);
-            } else {
-                console.log(data.toString());
-            }
+//Path to bidagent executable script
+var BIDAGENT_EXECUTABLE = './bidding-agents/nodebidagent.js';
+
+bidderPubSub.subscriptions.createBidder(function(err, subscription){
+    if (err) throw new Error('Error creating subscription to createBidder topic: ' + err);
+
+    // message listener
+    subscription.on('message', function(message){
+        var campaign_id = message.data;
+        logger.info('Received createBidder message for campaignId '+ campaign_id + ', spawning bidagent...');
+        // get campaign object from DB first
+        advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign){
+
+            // create config objects to pass to bidagent
+            var config_objs = getAgentConfig(campaign.parent_advertiser, campaign);
+            var agentConfig = JSON.stringify(config_objs[0]);
+            var targetingConfig = JSON.stringify(config_objs[1]);
+
+            // spawn child process, i.e. spin up new bidding agent
+            var agent = child_process.spawn(BIDAGENT_EXECUTABLE,
+                [agentConfig,targetingConfig, env_config]);
+
+            // handle stdout
+            agent.stdout.on('data', function(data){
+                var logline = data.toString();
+                // hacky, I know.
+                // log using bid method if logline begins with 'BID: '
+                if (logline.indexOf(logging.BID_PREFIX) === 0){
+                    var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
+                    // call logger method, pass campaign and advertiser in.
+                    logger.bid(meta, campaign, campaign.parent_advertiser);
+                } else {
+                    logger.info(data.toString());
+                }
+            });
+
+            // handle stderr
+            agent.stderr.on('data', function(data){
+                logger.error(data.toString());
+            });
         });
+    });
 
-        // handle stderr
-        agent.stderr.on('data', function(data){
-            console.log(data.toString());
-        });
-
+    subscription.on('error', function(err){
+        logger.error(err);
     });
 });
+
+
