@@ -138,7 +138,7 @@ if (process.env.NODE_ENV == 'local-test'){
         logger: logger
     }
 } else {
-    pubsub_options = {};
+    pubsub_options = {projectId: 'mimetic-codex-781'};
 }
 var bidderPubSub = new pubsub.BidderPubSub(pubsub_options);
 
