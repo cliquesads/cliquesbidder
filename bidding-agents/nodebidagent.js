@@ -35,12 +35,13 @@ var accountFullName = agentConfig.account.join(":");
 // add listener for config changes passed by controller
 process.stdin.resume();
 process.stdin.on('data', function(data){
-    // debugging string
-    console.log("Received message from parent:" + data);
-
     data = JSON.parse(data);
     agentConfig = data[0] || agentConfig;
     targetingConfig = data[1] || targetingConfig;
+
+    console.log(agentConfig.account);
+    console.log(targetingConfig);
+
     // send new config to core
     agent.doConfig(agentConfig);
 });
