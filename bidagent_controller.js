@@ -66,6 +66,14 @@ var adserver_host = config.get('AdServer.http.external.hostname');
 var adserver_port = config.get('AdServer.http.external.port');
 var tag = new tags.ImpTag(adserver_host, { port: adserver_port });
 
+// Get environment configs to connect bidAgents to RTBKit core services like Zookeeper, carbon
+// These should be stored in JSON file bootstrap.json use by RTBKit
+var bootstrap_config = JSON.parse(jsonminify(fs.readFileSync('./config/rtbkit/bootstrap.json', 'utf8')));
+var env_config = JSON.stringify({
+    "zookeeper-uri": bootstrap_config["zookeeper-uri"],
+    "carbon-uri": bootstrap_config["carbon-uri"]
+});
+
 /**
  * Translates Advertiser document from MongoDB into config compatible with
  * node bidagent.
@@ -74,7 +82,7 @@ var tag = new tags.ImpTag(adserver_host, { port: adserver_port });
  *      as config <-> campaign is 1-1, currently.
  * @param {Object} options
  */
-function parseAgentConfigFromObject(advertiser, campaign, options){
+function _parseAgentConfigFromObject(advertiser, campaign, options){
     options             = options || {};
     var maxInFlight     = options.max_in_flight || 50;
     var bidProbability  = options.bidProbability || 1.0;
@@ -130,26 +138,148 @@ function parseAgentConfigFromObject(advertiser, campaign, options){
  * @param campaign_id
  * @param callback takes (err, args_array)
  */
-function _getAgentConfig(campaign_id, callback){
+function getAgentConfig(campaign_id, callback){
     // get campaign object from DB first
     advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign) {
         // create config objects to pass to bidagent
         if (err) return callback(err);
-        var config_objs = parseAgentConfigFromObject(campaign.parent_advertiser, campaign);
+        var config_objs = _parseAgentConfigFromObject(campaign.parent_advertiser, campaign);
         var agentConfig = JSON.stringify(config_objs[0]);
         var targetingConfig = JSON.stringify(config_objs[1]);
         return callback(null, [agentConfig, targetingConfig, env_config], campaign);
     });
 }
 
-var bootstrap_config = JSON.parse(jsonminify(fs.readFileSync('./config/rtbkit/bootstrap.json', 'utf8')));
-var env_config = JSON.stringify({
-    "zookeeper-uri": bootstrap_config["zookeeper-uri"],
-    "carbon-uri": bootstrap_config["carbon-uri"]
-});
+/* ------------------ CONTROLLER CLASS ------------------- */
+
+/**
+ * Controller object just helps to manage creation & lookup of bidAgent child processes.
+ *
+ * Provides simple methods to create, update & stop bidAgent child processes, which can
+ * be hooked to signals or messages.
+ *
+ * NOTE: Assumes strict 1-1 mapping between campaign objects and bidagents.
+ *
+ * @param {Object} [bidAgents={}] optional mapping between campaign_ids and agent processes.
+ * @constructor
+ * @private
+ */
+var _Controller = function(bidAgents){
+    //Path to bidagent executable script
+    this.BIDAGENT_EXECUTABLE = './bidding-agents/nodebidagent.js';
+    // TODO: might want to make this object contain campaign-keyed configs / PID's
+    // TODO: instead of child process objects so that they can be re-spawned in the event
+    // TODO: of a server fault.  Would have to persist this object somewhere like redis,
+    // TODO: mongo, whatever
+    this.bidAgents = bidAgents || {};
+};
+
+_Controller.prototype._registerBidAgent = function(campaign_id, bidAgent){
+    this.bidAgents[campaign_id] = bidAgent;
+};
+
+_Controller.prototype._getBidAgent = function(campaign_id){
+    return this.bidAgents[campaign_id]
+};
+
+/**
+ * Spawns bidAgent child process and registers process with the
+ * controller.
+ *
+ * @param campaign_id
+ */
+_Controller.prototype.createBidAgent = function(campaign_id){
+    var self = this;
+
+    // First check to make sure no other agent is running for this campaign already,
+    // which would mean that this method has been called in error
+    if (self._getBidAgent(campaign_id)){
+        // TODO: Might want to throw a bigger hissy-fit if this happens rather than
+        // TODO: just logging it...
+        var msg = util.format('createBidAgent was called for campaign_id %s, but a ' +
+        'bidAgent for this campaign_id already exists!!!', campaign_id);
+        logger.error(msg);
+        return;
+    }
+
+    // wrap creation of bidAgent in call to DB to get config data
+    getAgentConfig(campaign_id, function(err, args_array, campaign) {
+        // spawn child process, i.e. spin up new bidding agent
+        var agent = child_process.spawn(self.BIDAGENT_EXECUTABLE, args_array);
+        self._registerBidAgent(campaign_id, agent);
+
+        // handle stdout
+        agent.stdout.on('data', function (data) {
+            var logline = data.toString();
+            // hacky, I know.
+            // log using bid method if logline begins with 'BID: '
+            if (logline.indexOf(logging.BID_PREFIX) === 0) {
+                var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
+                // call logger method, pass campaign and advertiser in.
+                logger.bid(meta, campaign, campaign.parent_advertiser);
+            } else {
+                logger.info(data.toString());
+            }
+        });
+
+        // handle stderr
+        agent.stderr.on('data', function (data){
+            logger.error(data.toString());
+        });
+    });
+};
+
+/**
+ * Sends message to bidAgent child process with updated config data.
+ *
+ * @param campaign_id
+ */
+_Controller.prototype.updateBidAgent = function(campaign_id){
+    var self = this;
+    var agent = self._getBidAgent(campaign_id);
+    if (!agent){
+        // TODO: Might want to throw a bigger hissy-fit if this happens rather than
+        // TODO: just logging it...
+        var msg = util.format('updateBidAgent was called for campaign_id %s, but a ' +
+        'bidAgent for this campaign_id does not exist!!!', campaign_id);
+        logger.error(msg);
+        return;
+    }
+    // wrap updating of bidAgent in call to DB to get config data
+    getAgentConfig(campaign_id, function(err, args_array, campaign){
+        // send message to child process with new configs
+        agent.stdin.write(JSON.stringify(args_array))
+    });
+};
+
+/**
+ * Kills bidAgent child process.
+ *
+ * @param campaign_id
+ */
+_Controller.prototype.stopBidAgent = function(campaign_id){
+    var self = this;
+    var agent = self._getBidAgent(campaign_id);
+    if (!agent){
+        // TODO: Might want to throw a bigger hissy-fit if this happens rather than
+        // TODO: just logging it...
+        var msg = util.format('stopBidAgent was called for campaign_id %s, but a ' +
+        'bidAgent for this campaign_id does not exist!!!', campaign_id);
+        logger.error(msg);
+        return;
+    }
+    // send kill signal to child process w/ custom signal
+    agent.kill('SIGUSR2');
+};
+
+// Instantiate empty controller
+var controller = new _Controller();
 
 
-/* ---------------- BIDDER PUBSUB INSTANCE ----------------- */
+/* ---------------- BIDDER PUBSUB INSTANCE & LISTENERS ----------------- */
+
+// Here's where the Controller methods actually get hooked to signals from
+// the outside world via Google PubSub api.
 
 if (process.env.NODE_ENV == 'local-test'){
     var pubsub_options = {
@@ -162,13 +292,8 @@ if (process.env.NODE_ENV == 'local-test'){
 }
 var bidderPubSub = new pubsub.BidderPubSub(pubsub_options);
 
-/* ------------ REGISTER LISTENERS FOR MESSAGES ------------ */
-
-//Path to bidagent executable script
-var BIDAGENT_EXECUTABLE = './bidding-agents/nodebidagent.js';
-
 /**
- * Handles createBidder messages.
+ * Create bidder using controller on message from pubsub topic createBidder.
  *
  * On message, will spawn new child process, running BIDAGENT_EXECUTABLE with
  * campaign config as args.
@@ -181,30 +306,7 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
     subscription.on('message', function(message){
         var campaign_id = message.data;
         logger.info('Received createBidder message for campaignId '+ campaign_id + ', spawning bidagent...');
-
-        _getAgentConfig(campaign_id, function(err, args_array, campaign){
-            // spawn child process, i.e. spin up new bidding agent
-            var agent = child_process.spawn(BIDAGENT_EXECUTABLE, args_array);
-
-            // handle stdout
-            agent.stdout.on('data', function(data){
-                var logline = data.toString();
-                // hacky, I know.
-                // log using bid method if logline begins with 'BID: '
-                if (logline.indexOf(logging.BID_PREFIX) === 0){
-                    var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
-                    // call logger method, pass campaign and advertiser in.
-                    logger.bid(meta, campaign, campaign.parent_advertiser);
-                } else {
-                    logger.info(data.toString());
-                }
-            });
-
-            // handle stderr
-            agent.stderr.on('data', function(data){
-                logger.error(data.toString());
-            });
-        });
+        controller.createBidAgent(campaign_id);
     });
 
     subscription.on('error', function(err){
@@ -212,4 +314,34 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
     });
 });
 
+/**
+ * Handle updates to bidder config, received from updateBidder topic messages
+ */
+bidderPubSub.subscriptions.updateBidder(function(err, subscription){
+    if (err) throw new Error('Error creating subscription to updateeBidder topic: ' + err);
 
+    subscription.on('message', function(message){
+        var campaign_id = message.data;
+        logger.info('Received updateBidder message for campaignId '+ campaign_id+ ', updating config...');
+        controller.updateBidAgent(campaign_id);
+    });
+    subscription.on('error', function(err){
+        logger.error(err);
+    });
+});
+
+/**
+ * Handle stopping bidAgents
+ */
+bidderPubSub.subscriptions.stopBidder(function(err, subscription){
+    if (err) throw new Error('Error creating subscription to stopBidder topic: ' + err);
+
+    subscription.on('message', function(message){
+        var campaign_id = message.data;
+        logger.info('Received stopBidder message for campaignId '+ campaign_id + ', killing bidAgent now...');
+        controller.stopBidAgent(campaign_id);
+    });
+    subscription.on('error', function(err){
+        logger.error(err);
+    });
+});
