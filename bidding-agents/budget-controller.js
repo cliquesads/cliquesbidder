@@ -36,13 +36,11 @@ BudgetController.addAccount = function(account, callback){
     }
     callback(null, res); 
   });
-
   req.on("error", function(e){
     console.log(e.message);
   });
-
   req.end();
-}
+};
 
 // topupTransferSync does a PUT {currency:amount} 
 // to /v1/accounts/<account>/balance?accountType=budget
@@ -72,4 +70,4 @@ BudgetController.topupTransferSync = function(account, currency, amount, callbac
 
   req.write(put_data);
   req.end();
-}
+};

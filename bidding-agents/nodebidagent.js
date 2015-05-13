@@ -4,59 +4,46 @@ var RTBkit = require('./../rtbkit/bin/rtb');
 var services_lib = require('./../rtbkit/bin/services');
 var budgetController = require('./budget-controller');
 
-//Parse configs from args
-var agentConfig = JSON.parse(process.argv[2]);
-var targetingConfig = JSON.parse(process.argv[3]);
-var envConfig = JSON.parse(process.argv[4]);
-
 /* ------------------ RTBKit Vars & Services --------------------*/
+
+//get environment config object
+var envConfig = JSON.parse(process.argv[4]);
 
 var zookeeperUri = envConfig["zookeeper-uri"], // must point to same Zookeeper as routers
     services = new services_lib.ServiceProxies(),
     accountAdded = false,
-    interval,
-    accountParent = agentConfig.account[0],
-    accountFullName = agentConfig.account.join(":");
+    interval;
     
 // uri,install name and location from bootstrap.json
 services.useZookeeper(zookeeperUri,"rtb-test", "mtl");
 // yes, we want to log to carbon
 services.logToCarbon(envConfig["carbon-uri"]);
 
-var addAccountHandler = function(err, res){
-  if (err) {
-    console.log("Error adding account "+accountFullName);
-    //logger.error("Error adding account "+accountFullName);
-    //logger.error(err);
-    console.log(err);
-  }
-};
-var topupErrorHandler = function(err, res){
-  if (err) {
-    // TODO: Handle an error topping up the account. 
-    //logger.error("Error topping up "+accountFullName);
-    console.log("Error topping up "+accountFullName);
-    // shutdown with an error
-    process.exit(1);
-  }
-};
-// Keep the budget for this subaccount topped up
-var pace = function(){
-  if (!accountAdded){
-    budgetController.addAccount(accountParent, addAccountHandler);
-    accountAdded = true;
-  }
-  // Transfer 10 cents every time we pace
-  budgetController.topupTransferSync(accountFullName, "USD/1M", 100000, topupErrorHandler);
-};
-
-//----------------------------
-// Agent Init & Event Handlers
-//----------------------------
+/* ----------------- Agent Init & Event Handlers ------------------ */
 
 var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
 // You can skip overriding some of these handlers by setting strictMode(false);
 
+// First get configs from args on startup
+var agentConfig = JSON.parse(process.argv[2]);
+var targetingConfig = JSON.parse(process.argv[3]);
+
+//setup account namespacing
+var accountParent = agentConfig.account[0];
+var accountFullName = agentConfig.account.join(":");
+
+// add listener for config changes passed by controller
+process.stdin.resume();
+process.stdin.on('data', function(data){
+    // debugging string
+    console.log("Received message from parent:" + data);
+
+    data = JSON.parse(data);
+    agentConfig = data[0] || agentConfig;
+    targetingConfig = data[1] || targetingConfig;
+    // send new config to core
+    agent.doConfig(agentConfig);
+});
 
 /**
  * Linearly modifies an original starting bid according to weights specified
@@ -76,9 +63,7 @@ function modifyBid(bid, requestValue, modifiers){
     });
     //console.log("Filtered targeting objects: " + JSON.stringify(filtered, null,2));
     if (filtered.length == 1){
-        var new_bid = bid * filtered[0].weight;
-        //console.log("Modified bid: " + new_bid);
-        return new_bid
+        return bid * filtered[0].weight;
     } else if (filtered.length == 0){
         return bid;
     } else {
@@ -158,7 +143,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
 };
 
 agent.onError = function(timestamp, description, message){
-  logger.error('Bidding Agent sent something invalid to the router.', description, message);
+  process.stderr.write('Bidding Agent sent something invalid to the router.', description, message);
 };
 
 // the agent won a bid. secondPrice contains the win price
@@ -297,9 +282,45 @@ agent.onPing = function(router,timesent,args){
 // END Agent Event Handlers
 //-------------------------
 
+//---------------------------------
+// Handlers for budget manipulation
+//---------------------------------
+
+var addAccountHandler = function(err, res){
+    if (err) {
+        console.log("Error adding account "+accountFullName);
+        //logger.error(err);
+        console.log(err);
+    } else {
+        console.log(res);
+    }
+};
+
+var topupErrorHandler = function(err, res){
+    if (err) {
+        // TODO: Handle an error topping up the account.
+        console.log("Error topping up "+accountFullName);
+        // shutdown with an error
+        process.exit(1);
+    }
+};
+
+// Keep the budget for this subaccount topped up
+var pace = function(){
+    if (!accountAdded){
+        budgetController.addAccount(accountParent, addAccountHandler);
+        accountAdded = true;
+    }
+    // Transfer 10 cents every time we pace
+
+    // TODO: Add pacing logic here, transferring budget from parent
+    budgetController.topupTransferSync(accountFullName, "USD/1M", 100000, topupErrorHandler);
+};
+
 //-------------------------
 // Initialize agent
 //-------------------------
+
 agent.init();
 agent.start();
 
