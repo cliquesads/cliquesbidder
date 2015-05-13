@@ -130,7 +130,7 @@ function parseAgentConfigFromObject(advertiser, campaign, options){
  * @param campaign_id
  * @param callback takes (err, args_array)
  */
-function getAgentConfig(campaign_id, callback){
+function _getAgentConfig(campaign_id, callback){
     // get campaign object from DB first
     advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign) {
         // create config objects to pass to bidagent
@@ -138,7 +138,7 @@ function getAgentConfig(campaign_id, callback){
         var config_objs = parseAgentConfigFromObject(campaign.parent_advertiser, campaign);
         var agentConfig = JSON.stringify(config_objs[0]);
         var targetingConfig = JSON.stringify(config_objs[1]);
-        return callback(null, [agentConfig, targetingConfig, env_config]);
+        return callback(null, [agentConfig, targetingConfig, env_config], campaign);
     });
 }
 
@@ -182,7 +182,7 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
         var campaign_id = message.data;
         logger.info('Received createBidder message for campaignId '+ campaign_id + ', spawning bidagent...');
 
-        getAgentConfig(campaign_id, function(err, args_array){
+        _getAgentConfig(campaign_id, function(err, args_array, campaign){
             // spawn child process, i.e. spin up new bidding agent
             var agent = child_process.spawn(BIDAGENT_EXECUTABLE, args_array);
 
