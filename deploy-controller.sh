@@ -10,7 +10,7 @@ npm install
 git submodule update
 
 #make sure separate redis instance is running on 6380
-./setup-redis.sh
+./setup/setup-redis.sh
 
 #make sure latest configs are pulled
 if [ ! -d $HOME"/repositories/cliques-config" ]; then
