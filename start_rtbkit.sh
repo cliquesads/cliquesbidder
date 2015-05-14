@@ -26,7 +26,7 @@ redis-server $CONFIG_DIR/redis.conf
 # Start Carbon
 sudo /opt/graphite/bin/carbon-cache.py start
 # Start apache
-service apache2 restart
+sudo service apache2 restart
 
 #start the mock exchange and detach
 cd $LOCAL_DIR
