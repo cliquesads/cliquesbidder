@@ -36,12 +36,12 @@ fi
 # Start Apache ZooKeeper
 # hacked for now to use zookeeper installed in platform-deps
 # cause version in binary install can't find classpath for some reason
-ZOOKEEPERPROC=$(ps -ef | grep 'java -Dzookeeper')
+ZOOKEEPERPROC=$(ps -ef | grep -c 'java -Dzookeeper')
 #only start if it's currently running
 #proc == 2 means that it's running, cause ps -ef | grep also runs a
 #process to auto-color whatever you're grepping, thus output will always >=1
 #even if it's not running
-if [ ! $ZOOKEEPERPROC == '2' ]; then
+if [ ! $ZOOKEEPERPROC -eq '2' ]; then
     $HOME/local/bin/zookeeper/bin/zkServer.sh start
 else
     echo "Zookeeper is already running, skipping..."
@@ -49,8 +49,8 @@ fi
 
 # Start RTBKit Redis Instance if not already running.
 REDISPROC='redis-server '$CONFIG_DIR'/redis.conf'
-REDIS_RUNNING=$(ps -ef | grep "$REDISPROC")
-if [ ! $REDIS_RUNNING == '2' ]; then
+REDIS_RUNNING=$(ps -ef | grep -c "$REDISPROC")
+if [ ! $REDIS_RUNNING -eq '2' ]; then
     $REDISPROC
 else
     echo "Redis RTBKit instance is already running, skipping..."
