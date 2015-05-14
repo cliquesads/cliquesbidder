@@ -1,7 +1,6 @@
 #!/bin/bash
 
 source ./activate_production.sh
-nvm use 0.12.0
 npm install
 
 #make sure separate redis instance is running on 6380
@@ -14,7 +13,7 @@ if [ ! -d $HOME"/repositories/cliques-config" ]; then
 else
     cd ../cliques-config
     git pull
-    cd ../cliques-adserver
+    cd ../cliquesbidder
 fi
 
 processname='bidAgentController'
