@@ -205,6 +205,10 @@ _Controller.prototype._getBidAgent = function(campaign_id){
     return this.bidAgents[campaign_id]
 };
 
+_Controller.prototype._deleteBidAgent = function(campaign_id){
+    delete(this.bidAgents[campaign_id]);
+};
+
 /**
  * Spawns bidAgent child process and registers process with the
  * controller.
@@ -293,6 +297,7 @@ _Controller.prototype.stopBidAgent = function(campaign_id){
     }
     // send kill signal to child process w/ custom signal
     agent.kill('SIGUSR2');
+    self._deleteBidAgent(campaign_id);
 };
 
 // Instantiate empty controller
