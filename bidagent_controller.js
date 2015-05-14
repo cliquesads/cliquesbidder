@@ -228,7 +228,7 @@ _Controller.prototype.createBidAgent = function(campaign_id){
     // wrap creation of bidAgent in call to DB to get config data
     getAgentConfig(campaign_id, function(err, serialized_config, campaign) {
         // spawn child process, i.e. spin up new bidding agent
-        var agent = child_process.spawn(self.BIDAGENT_EXECUTABLE, serialized_config);
+        var agent = child_process.spawn(self.BIDAGENT_EXECUTABLE, [serialized_config]);
         self._registerBidAgent(campaign_id, agent);
 
         // handle stdout
