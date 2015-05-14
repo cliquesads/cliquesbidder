@@ -295,11 +295,9 @@ process.on('SIGUSR2', function(){
 
 var addAccountHandler = function(err, res){
     if (err) {
-        console.log("Error adding account "+accountFullName);
+        console.log("Error adding account " + accountFullName);
         //logger.error(err);
         console.log(err);
-    } else {
-        console.log(res);
     }
 };
 
