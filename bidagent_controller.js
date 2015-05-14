@@ -168,7 +168,6 @@ function getAgentConfig(campaign_id, callback){
         var envConfig = _parseEnvConfig(BOOTSTRAP_FILE);
 
         var agentConfig = new AgentConfig(coreConfig, targetingConfig, envConfig);
-
         return callback(null, agentConfig.serialize(), campaign);
     });
 }
@@ -236,7 +235,7 @@ _Controller.prototype.createBidAgent = function(campaign_id){
         self._registerBidAgent(campaign_id, agent);
 
         // handle stdout
-        agent.stdout.on('data', function (data) {
+        agent.stdout.on('data', function (data){
             var logline = data.toString();
             // hacky, I know.
             // log using bid method if logline begins with 'BID: '
@@ -327,16 +326,13 @@ var bidderPubSub = new pubsub.BidderPubSub(pubsub_options);
  * campaign config as args.
  */
 bidderPubSub.subscriptions.createBidder(function(err, subscription){
-
     if (err) throw new Error('Error creating subscription to createBidder topic: ' + err);
-
     // message listener
     subscription.on('message', function(message){
         var campaign_id = message.data;
         logger.info('Received createBidder message for campaignId '+ campaign_id + ', spawning bidagent...');
         controller.createBidAgent(campaign_id);
     });
-
     subscription.on('error', function(err){
         logger.error(err);
     });
@@ -347,7 +343,6 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
  */
 bidderPubSub.subscriptions.updateBidder(function(err, subscription){
     if (err) throw new Error('Error creating subscription to updateeBidder topic: ' + err);
-
     subscription.on('message', function(message){
         var campaign_id = message.data;
         logger.info('Received updateBidder message for campaignId '+ campaign_id+ ', updating config...');
@@ -363,7 +358,6 @@ bidderPubSub.subscriptions.updateBidder(function(err, subscription){
  */
 bidderPubSub.subscriptions.stopBidder(function(err, subscription){
     if (err) throw new Error('Error creating subscription to stopBidder topic: ' + err);
-
     subscription.on('message', function(message){
         var campaign_id = message.data;
         logger.info('Received stopBidder message for campaignId '+ campaign_id + ', killing bidAgent now...');

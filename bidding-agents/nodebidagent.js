@@ -277,6 +277,14 @@ agent.onPing = function(router,timesent,args){
 //  console.log("CLICK");
 //}
 
+// Handle kill signal sent by controller, shut down BidAgent
+// to clear its state
+process.on('SIGUSR2', function(){
+    agent.close();
+    console.log('bidAgent closed, now exiting process.');
+    process.exit(0);
+});
+
 //-------------------------
 // END Agent Event Handlers
 //-------------------------
