@@ -1,7 +1,13 @@
 #!/bin/bash
 
+#activate production environment
 source ./activate_production.sh
+
+#install all NPM dependencies
 npm install
+
+#pull any RTBKit submodule updates
+git submodule update
 
 #make sure separate redis instance is running on 6380
 ./setup-redis.sh
