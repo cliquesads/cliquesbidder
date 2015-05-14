@@ -36,9 +36,12 @@ AgentConfig.prototype.serialize = function(){
 /**
  * Deserializes from string, returns a new AgentConfig object
  *
- * @param {String} serialized_config output from AgentConfig.serialize
+ * Static method
+ *
+ * @param serialized_config
+ * @returns {AgentConfig}
  */
-AgentConfig.prototype.deserialize = function(serialized_config){
+AgentConfig.deserialize = function(serialized_config){
     var conf = JSON.parse(serialized_config);
     return new AgentConfig(conf.coreConfig, conf.targetingConfig, conf.envConfig)
 };
