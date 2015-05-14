@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This is a wrapper for the rtbkit/launch.sh launcher script which makes sure
+# all necessary background services are running before RTBKit is launched.
+
 set -e
 
 REPOSITORY_DIR=$HOME/repositories
@@ -32,21 +35,21 @@ sudo service apache2 restart
 cd $LOCAL_DIR
 
 #flag -m specifies whether to run mock_exchange or not
-while getopts ":m:" opt; do
-  case $opt in
-    m)
-      echo "-m is a flag, don't understand argument $OPTARG but I assume you want to run the mock_exchange" >&2
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      echo "Use -m flag to indicate whether or not you want to run mock_exchange"
-      exit 1
-      ;;
-    :)
-      ./bin/mock_exchange_runner >& /tmp/mock_exchange_runner.out &
-      ;;
-  esac
-done
+#while getopts ":m:" opt; do
+#  case $opt in
+#    m)
+#      echo "-m is a flag, don't understand argument $OPTARG but I assume you want to run the mock_exchange" >&2
+#      ;;
+#    \?)
+#      echo "Invalid option: -$OPTARG" >&2
+#      echo "Use -m flag to indicate whether or not you want to run mock_exchange"
+#      exit 1
+#      ;;
+#    :)
+#      ./bin/mock_exchange_runner >& /tmp/mock_exchange_runner.out &
+#      ;;
+#  esac
+#done
 
 #make symlink to config dir in parent directory if one doesn't already exist
 if [ ! -L 'cliquesconfig' ]; then
