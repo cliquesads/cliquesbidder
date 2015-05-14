@@ -4,6 +4,7 @@ var bigQueryUtils = node_utils.google.bigQueryUtils;
 var googleAuth = node_utils.google.auth;
 var logging = require('./lib/bidder_logging.js');
 var pubsub = node_utils.google.pubsub;
+var AgentConfig = require('./nodebidagent-config.js').AgentConfig;
 
 var config = require('config');
 var path = require('path');
@@ -59,36 +60,49 @@ mongo_connection.once('open', function(callback){
     advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
 });
 
-/* ----- Helpers to convert advertiser document into config ------ */
-
-// instantiate tag object to use to generate ad markup for bidder configs
-var adserver_host = config.get('AdServer.http.external.hostname');
-var adserver_port = config.get('AdServer.http.external.port');
-var tag = new tags.ImpTag(adserver_host, { port: adserver_port });
+/* -------------------- BIDAGENT CONFIGURATION -------------- */
 
 // Get environment configs to connect bidAgents to RTBKit core services like Zookeeper, carbon
 // These should be stored in JSON file bootstrap.json use by RTBKit
-var bootstrap_config = JSON.parse(jsonminify(fs.readFileSync('./config/rtbkit/bootstrap.json', 'utf8')));
-var env_config = JSON.stringify({
-    "zookeeper-uri": bootstrap_config["zookeeper-uri"],
-    "carbon-uri": bootstrap_config["carbon-uri"]
-});
+var BOOTSTRAP_FILE = './config/rtbkit/bootstrap.json';
+
+/**
+ * Parses out environment config from bootstrap.json file, used to
+ * configure RTBKit core services.
+ *
+ * @param bootstrap_file
+ * @returns {*}
+ * @private
+ */
+function _parseEnvConfig(bootstrap_file){
+    var bootstrap_config = JSON.parse(jsonminify(fs.readFileSync(bootstrap_file, 'utf8')));
+    return JSON.stringify({
+        "zookeeper-uri": bootstrap_config["zookeeper-uri"],
+        "carbon-uri": bootstrap_config["carbon-uri"]
+    });
+}
+
+// Configs for tag  object
+var ADSERVER_HOST= config.get('AdServer.http.external.hostname');
+var ADSERVER_PORT = config.get('AdServer.http.external.port');
 
 /**
  * Translates Advertiser document from MongoDB into config compatible with
  * node bidagent.
- * @param advertiser object
  * @param campaign object. Nested in Advertiser but need to specify precise campaign
  *      as config <-> campaign is 1-1, currently.
- * @param {Object} options
+ * @param {Object} [options={}]
  */
-function _parseAgentConfigFromObject(advertiser, campaign, options){
+function _parseCoreConfig(campaign, options){
     options             = options || {};
     var maxInFlight     = options.max_in_flight || 50;
     var bidProbability  = options.bidProbability || 1.0;
 
-    var agentConfig = {
-        account: [advertiser.id,campaign.id],
+    // tag object used to generate creative markup from config stored in DB
+    var tag = new tags.ImpTag(ADSERVER_HOST, { port: ADSERVER_PORT});
+
+    var coreConfig = {
+        account: [campaign.parent_advertiser.id,campaign.id],
         bidProbability: bidProbability,
         providerConfig: {
             cliques: {
@@ -108,7 +122,7 @@ function _parseAgentConfigFromObject(advertiser, campaign, options){
     // push creatives into config
     for (var i=0; i < campaign.creativegroups.length; i++){
         var crg = campaign.creativegroups[i];
-        agentConfig.creatives.push({
+        coreConfig.creatives.push({
             format: { width: crg.w, height: crg.h },
             id: i,
             name: crg.name,
@@ -116,37 +130,46 @@ function _parseAgentConfigFromObject(advertiser, campaign, options){
             providerConfig: {
                 cliques: {
                     adm: tag.render(crg),
-                    adomain: [advertiser.website]
+                    adomain: [campaign.parent_advertiser.website]
                 }
             }
         });
     }
-    var targeting_config = {
+    return coreConfig;
+}
+
+function _parseTargetingConfig(campaign){
+    return {
         base_bid: campaign.base_bid,
         max_bid: campaign.max_bid,
         country_targets: campaign.country_targets,
         dma_targets: campaign.dma_targets,
         placement_targets: campaign.placement_targets
     };
-    return [agentConfig, targeting_config];
 }
 
 /**
- * Wrapper for agent spawning/updating/messaging to get configs from
- * message from subscription.
+ * Gets serialized AgentConfig object to pass to child bidAgent.
  *
- * @param campaign_id
- * @param callback takes (err, args_array)
+ * Calls three private parsers to get core, env & targeting configs.
+ *
+ * @param {String} campaign_id Mongo campaign.id
+ * @param callback takes (err, serialized_config, campaign_obj)
  */
 function getAgentConfig(campaign_id, callback){
     // get campaign object from DB first
-    advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign) {
+    advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign){
         // create config objects to pass to bidagent
         if (err) return callback(err);
-        var config_objs = _parseAgentConfigFromObject(campaign.parent_advertiser, campaign);
-        var agentConfig = JSON.stringify(config_objs[0]);
-        var targetingConfig = JSON.stringify(config_objs[1]);
-        return callback(null, [agentConfig, targetingConfig, env_config], campaign);
+
+        // parse individual configs
+        var coreConfig = _parseCoreConfig(campaign);
+        var targetingConfig = _parseTargetingConfig(campaign);
+        var envConfig = _parseEnvConfig(BOOTSTRAP_FILE);
+
+        var agentConfig = new AgentConfig(coreConfig, targetingConfig, envConfig);
+
+        return callback(null, agentConfig.serialize(), campaign);
     });
 }
 
@@ -203,9 +226,9 @@ _Controller.prototype.createBidAgent = function(campaign_id){
     }
 
     // wrap creation of bidAgent in call to DB to get config data
-    getAgentConfig(campaign_id, function(err, args_array, campaign) {
+    getAgentConfig(campaign_id, function(err, serialized_config, campaign) {
         // spawn child process, i.e. spin up new bidding agent
-        var agent = child_process.spawn(self.BIDAGENT_EXECUTABLE, args_array);
+        var agent = child_process.spawn(self.BIDAGENT_EXECUTABLE, serialized_config);
         self._registerBidAgent(campaign_id, agent);
 
         // handle stdout
@@ -246,9 +269,9 @@ _Controller.prototype.updateBidAgent = function(campaign_id){
         return;
     }
     // wrap updating of bidAgent in call to DB to get config data
-    getAgentConfig(campaign_id, function(err, args_array, campaign){
+    getAgentConfig(campaign_id, function(err, serialized_config, campaign){
         // send message to child process with new configs
-        agent.stdin.write(JSON.stringify(args_array))
+        agent.stdin.write(serialized_config);
     });
 };
 

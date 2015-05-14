@@ -4,10 +4,16 @@ var RTBkit = require('./../rtbkit/bin/rtb');
 var services_lib = require('./../rtbkit/bin/services');
 var budgetController = require('./budget-controller');
 
-/* ------------------ RTBKit Vars & Services --------------------*/
+/* ------------------ Parse initial configuration -------------- */
+var AgentConfig = require('./nodebidagent-config').AgentConfig;
 
-//get environment config object
-var envConfig = JSON.parse(process.argv[4]);
+// First get configs from args on startup
+var agentConfig = AgentConfig.deserialize(process.argv[2]);
+var coreConfig = agentConfig.coreConfig;
+var targetingConfig = agentConfig.targetingConfig;
+var envConfig = agentConfig.envConfig;
+
+/* ------------------ RTBKit Vars & Services --------------------*/
 
 var zookeeperUri = envConfig["zookeeper-uri"], // must point to same Zookeeper as routers
     services = new services_lib.ServiceProxies(),
@@ -24,26 +30,18 @@ services.logToCarbon(envConfig["carbon-uri"]);
 var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
 // You can skip overriding some of these handlers by setting strictMode(false);
 
-// First get configs from args on startup
-var agentConfig = JSON.parse(process.argv[2]);
-var targetingConfig = JSON.parse(process.argv[3]);
-
 //setup account namespacing
-var accountParent = agentConfig.account[0];
-var accountFullName = agentConfig.account.join(":");
+var accountParent = coreConfig.account[0];
+var accountFullName = coreConfig.account.join(":");
 
 // add listener for config changes passed by controller
 process.stdin.resume();
 process.stdin.on('data', function(data){
-    data = JSON.parse(data);
-    agentConfig = data[0] || agentConfig;
-    targetingConfig = data[1] || targetingConfig;
-
-    console.log(agentConfig.account);
-    console.log(targetingConfig);
-
+    agentConfig = AgentConfig.deserialize(data);
+    coreConfig = agentConfig.coreConfig;
+    targetingConfig = agentConfig.targetingConfig;
     // send new config to core
-    agent.doConfig(agentConfig);
+    agent.doConfig(coreConfig);
 });
 
 /**
@@ -121,7 +119,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
             impid: impid,
             bid: bid,
             placement: spot.tagid,
-            creative_group: agentConfig.creatives[creativeIndex].tagId
+            creative_group: coreConfig.creatives[creativeIndex].tagId
         };
         // this is super hacky and I don't like it, but it works. Im sorry.
         console.log('BID ' + JSON.stringify(meta));
@@ -325,7 +323,7 @@ var pace = function(){
 agent.init();
 agent.start();
 
-agent.doConfig(agentConfig);
+agent.doConfig(coreConfig);
 // Start pacing the budget inflow for this bid agent
 pace();
 interval = setInterval(pace,10000);

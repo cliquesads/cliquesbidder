@@ -1,82 +1,44 @@
-/** nodebidagent-config.js
-    Jay Pozo, 19 Sep 2013
-    Copyright (c) 2013 Datacratic.  All rights reserved.
+/**
+ * Lightweight class to centralize serialization/deserialization methods
+ * for bidder agent configs.
+ *
+ * It's sort of trivial now but since it's a crucial part of the layer
+ * of communication between controller and agent, it seemed logical to split
+ * it into a shared class.  Was getting yucky trying to handle it
+ * in both modules.
+ *
+ * TODO: Could add validation here in the future
+ *
+ * @param {Object} envConfig required
+ * @param {String} envConfig.zookeeper-uri uri for zookeeper endpoints
+ * @param {String} envConfig.carbon-uri uri for carbon endpoints
+ * @param {Object} coreConfig
+ * @param {Object} targetingConfig
+ * @type {Function}
+ */
+var AgentConfig = exports.AgentConfig = function(coreConfig, targetingConfig, envConfig){
+    this.envConfig = envConfig;
+    this.targetingConfig = targetingConfig;
+    this.coreConfig = coreConfig;
+};
 
-    Configuration of our node bidding agent.
-*/
+/**
+ * Serializes into string to pass between parent & child processes
+ */
+AgentConfig.prototype.serialize = function(){
+    return JSON.stringify({
+        envConfig: this.envConfig,
+        targetingConfig: this.targetingConfig,
+        coreConfig: this.coreConfig
+    });
+};
 
-exports.config =
-{
-    "account": [
-        "553176cb469cbc6e40e28689",
-        "553176cb469cbc6e40e28687"
-    ],
-    "bidProbability": 1,
-    "providerConfig": {
-        "cliques": {
-            "seat": "Backcountry"
-        }
-    },
-    "augmentations": {
-        "frequency-cap-ex": {
-            "required": true,
-            "config": 24,
-            "filters": {
-                "include": [
-                    "pass-frequency-cap-ex"
-                ]
-            }
-        }
-    },
-    "maxInFlight": 50,
-    "creatives": [
-        {
-            "format": {
-                "width": 300,
-                "height": 250
-            },
-            "id": 1,
-            "tagId": "553176cb469cbc6e40e28682",
-            "providerConfig": {
-                "cliques": {
-                    "adm": "<!DOCTYPE html><html lang=\"en\"><head><style>body {\n    margin:0;\n    height:100%;\n    background-color:transparent;\n    width:100%;\n    text-align:center;\n}</style></head><body><iframe src=\"http://adsrv.cliquesads.com/crg?crgid=553176cb469cbc6e40e28682&pid=${PID}&impid=${IMPID}\" frameborder=\"0\" scrolling=\"no\" width=\"300\" height=\"250\"></iframe></body></html>",
-                    "adomain": [
-                        "http://cliquesads.com"
-                    ]
-                }
-            }
-        },
-        {
-            "format": {
-                "width": 160,
-                "height": 600
-            },
-            "id": 2,
-            "tagId": "553176cb469cbc6e40e28684",
-            "providerConfig": {
-                "cliques": {
-                    "adm": "<!DOCTYPE html><html lang=\"en\"><head><style>body {\n    margin:0;\n    height:100%;\n    background-color:transparent;\n    width:100%;\n    text-align:center;\n}</style></head><body><iframe src=\"http://adsrv.cliquesads.com/crg?crgid=553176cb469cbc6e40e28684&pid=${PID}&impid=${IMPID}\" frameborder=\"0\" scrolling=\"no\" width=\"160\" height=\"600\"></iframe></body></html>",
-                    "adomain": [
-                        "http://cliquesads.com"
-                    ]
-                }
-            }
-        },
-        {
-            "format": {
-                "width": 728,
-                "height": 90
-            },
-            "id": 3,
-            "tagId": "553176cb469cbc6e40e28686",
-            "providerConfig": {
-                "cliques": {
-                    "adm": "<!DOCTYPE html><html lang=\"en\"><head><style>body {\n    margin:0;\n    height:100%;\n    background-color:transparent;\n    width:100%;\n    text-align:center;\n}</style></head><body><iframe src=\"http://adsrv.cliquesads.com/crg?crgid=553176cb469cbc6e40e28686&pid=${PID}&impid=${IMPID}\" frameborder=\"0\" scrolling=\"no\" width=\"728\" height=\"90\"></iframe></body></html>",
-                    "adomain": [
-                        "http://cliquesads.com"
-                    ]
-                }
-            }
-        }
-    ]
+/**
+ * Deserializes from string, returns a new AgentConfig object
+ *
+ * @param {String} serialized_config output from AgentConfig.serialize
+ */
+AgentConfig.prototype.deserialize = function(serialized_config){
+    var conf = JSON.parse(serialized_config);
+    return new AgentConfig(conf.coreConfig, conf.targetingConfig, conf.envConfig)
 };
