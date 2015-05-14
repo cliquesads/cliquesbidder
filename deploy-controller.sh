@@ -9,6 +9,10 @@ npm install
 #pull any RTBKit submodule updates
 git submodule update
 
+#now make sure RTBKit Core is up and running, along with
+#all background services
+./deploy-rtbkit.sh
+
 #make sure separate redis instance is running on 6380
 ./setup/setup-redis.sh
 
