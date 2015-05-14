@@ -76,10 +76,10 @@ var BOOTSTRAP_FILE = './config/rtbkit/bootstrap.json';
  */
 function _parseEnvConfig(bootstrap_file){
     var bootstrap_config = JSON.parse(jsonminify(fs.readFileSync(bootstrap_file, 'utf8')));
-    return JSON.stringify({
+    return {
         "zookeeper-uri": bootstrap_config["zookeeper-uri"],
         "carbon-uri": bootstrap_config["carbon-uri"]
-    });
+    };
 }
 
 // Configs for tag  object
