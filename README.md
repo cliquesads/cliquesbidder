@@ -17,6 +17,7 @@ After many attempts to install RTBKit in many different ways on many different s
 # Deployment
 
 ## Docker on Mac OSX
+**NOTE**: *Generally, Docker containers are not powerful enough to run an instance of RTBKit so I've since abandoned this method of testing.  However, leaving this tutorial here in case it later becomes useful.*
 
 First, you need to install `boot2docker` and pull the image `cliqueslabs/rtbkit`.  Instructions on how to do that are [here](https://github.com/cliquesads/install-rtbkit#install_from_docker).
 
