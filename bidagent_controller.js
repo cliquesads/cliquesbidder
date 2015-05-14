@@ -4,7 +4,7 @@ var bigQueryUtils = node_utils.google.bigQueryUtils;
 var googleAuth = node_utils.google.auth;
 var logging = require('./lib/bidder_logging.js');
 var pubsub = node_utils.google.pubsub;
-var AgentConfig = require('./nodebidagent-config.js').AgentConfig;
+var AgentConfig = require('./bidding-agents/nodebidagent-config.js').AgentConfig;
 
 var config = require('config');
 var path = require('path');
