@@ -53,54 +53,6 @@ BudgetController = exports.BudgetController = function(agentConfig, options){
 };
 
 /**
- * Wrapper method to send all API requests.
- *
- * Goal of this is to make options object as simple as possible to reduce redundancy.
- *
- * Only need to specify `path`,`query` and `method` params in options, this method
- * will handle the rest, including stringifying data & setting headers if data is
- * present.
- *
- * @param {Object} options further simplified options object
- * @param {String} [options.path='/'] resource path, i.e. path relative to collection path
- * @param {String} [options.query] query object
- * @param {String} [options.method='GET'] HTTP method
- * @param {Object} [options.headers] Request headers.  POST/PUT JSON data headers will be created automatically.
- * @param {Object} [data=null] optional JSON data object to send with PUT/POST requests
- * @param {Function} callback takes (err, response)
- */
-BudgetController.prototype.sendAPIRequest = function(options, data, callback){
-    if (arguments.length == 2){
-        callback = data;
-        data = false;
-    } else {
-        // Set default JSON data headers, if data is provided
-        data = JSON.stringify(data);
-        if (!options.hasOwnProperty("headers")) {
-            options.headers = {};
-        }
-        options.headers["Content-Type"] = "application/json";
-        options.headers["Content-Length"] = data.length;
-    }
-    // now send request
-    var req = http.request(options, function(res){
-        if (res.statusCode == "400"){
-            return callback('HTTP ERROR: 400 REST API Request Error. Options: '+ JSON.stringify(options))
-        }
-        return callback(null, res);
-    });
-    // add error handler
-    req.on("error", function(e){
-        callback(e + ", Request options: " + JSON.stringify(options));
-    });
-    // write stringified JSON data, if any
-    if (data){
-        req.write(data);
-    }
-    req.end();
-};
-
-/**
  * Simple decorator for this._getRequest options to capture collection path
  * in closure.
  *
@@ -131,14 +83,16 @@ BudgetController.prototype._requestOptionsDecorator = function(collection_path){
  * @private
  */
 BudgetController.prototype._getRequestOptions = function(collection_path, options){
+    options     = options || {};
     var method  = options.method || 'GET';
     var query   = options.query;
     var path    = options.path;
     var headers = options.headers;
 
     path = ['',this.apiVersion, collection_path, path].join('/');
-    path = [path, querystring.stringify(query)].join('?');
-
+    if (query){
+        path = [path, querystring.stringify(query)].join('?');
+    }
     var new_options = {
         path:       path,
         hostname:   this.hostname,
@@ -149,6 +103,54 @@ BudgetController.prototype._getRequestOptions = function(collection_path, option
         new_options.headers = headers
     }
     return new_options;
+};
+
+/**
+ * Wrapper method to send all API requests.
+ *
+ * Goal of this is to make options object as simple as possible to reduce redundancy.
+ *
+ * Only need to specify `path`,`query` and `method` params in options, this method
+ * will handle the rest, including stringifying data & setting headers if data is
+ * present.
+ *
+ * @param {Object} options further simplified options object
+ * @param {String} [options.path='/'] resource path, i.e. path relative to collection path
+ * @param {String} [options.query] query object
+ * @param {String} [options.method='GET'] HTTP method
+ * @param {Object} [options.headers] Request headers.  POST/PUT JSON data headers will be created automatically.
+ * @param {Object} [data=null] optional JSON data object to send with PUT/POST requests
+ * @param {Function} callback takes (err, response)
+ */
+BudgetController.prototype._sendAPIRequest = function(options, data, callback){
+    if (arguments.length == 2){
+        callback = data;
+        data = false;
+    } else {
+        // Set default JSON data headers, if data is provided
+        data = JSON.stringify(data);
+        if (!options.hasOwnProperty("headers")) {
+            options.headers = {};
+        }
+        options.headers["Content-Type"] = "application/json";
+        options.headers["Content-Length"] = data.length;
+    }
+    // now send request
+    var req = http.request(options, function(res){
+        if (res.statusCode == "400"){
+            return callback('HTTP ERROR: 400 REST API Request Error. Options: '+ JSON.stringify(options))
+        }
+        return callback(null, res);
+    });
+    // add error handler
+    req.on("error", function(e){
+        callback(e + ", Request options: " + JSON.stringify(options));
+    });
+    // write stringified JSON data, if any
+    if (data){
+        req.write(data);
+    }
+    req.end();
 };
 
 //
@@ -166,7 +168,7 @@ BudgetController.prototype.addAccount = function(accountName, callback){
             accountName: accountName
         }
     });
-    this.sendAPIRequest(options, callback);
+    this._sendAPIRequest(options, callback);
 };
 
 /**
@@ -187,7 +189,35 @@ BudgetController.prototype.addBalanceToChildAccount = function(accountName, curr
         },
         method: 'PUT'
     });
-    this.sendAPIRequest(options, put_data, callback)
+    this._sendAPIRequest(options, put_data, callback);
+};
+
+/**
+ * Sets new budget at the top-level account of the tree.
+ *
+ * @param {String} accountName must be top-level account only
+ * @param currency
+ * @param amount
+ * @param callback
+ */
+BudgetController.prototype.setAccountBudget = function(accountName, currency, amount, callback){
+    var data = {};
+    data[currency] = amount;
+    var options = this.collections.accounts.getRequestOptions({
+        path: [accountName, 'budget'].join('/'),
+        method: 'POST'
+    });
+    this._sendAPIRequest(options, data, callback);
+};
+
+/**
+ * Gets JSON summary of all accounts in tree.
+ *
+ * @param callback
+ */
+BudgetController.prototype.getSummary = function(callback){
+    var options = this.collections.summary.getRequestOptions();
+    this._sendAPIRequest(options,callback);
 };
 
 
@@ -200,7 +230,12 @@ var agentConfig = AgentConfig.deserialize(fs.readFileSync('sample-agent-config.j
 var bc = new BudgetController(agentConfig);
 //var opts = bc.collections.accounts.getRequestOptions({ path: 'budget', query: {"akey": "avalue", "something":"special"}});
 
-bc.addBalanceToChildAccount(bc.accountName, 'USD/1M', '380283930383', function(err, res){
+//bc.addBalanceToChildAccount(bc.accountName, 'USD/1M', '380283930383', function(err, res){
+//    if (err) return console.log(err);
+//    console.log(res);
+//});
+
+bc.getSummary(function(err, res){
     if (err) return console.log(err);
     console.log(res);
 });
