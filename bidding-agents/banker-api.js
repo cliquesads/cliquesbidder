@@ -122,13 +122,13 @@ BankerRESTAPI.prototype._sendAPIRequest = function(options, data, callback){
     // now send request
     var req = http.request(options, function(res){
         if (res.statusCode == "400"){
-            return callback('HTTP ERROR: 400 REST API Request Error. Options: '+ JSON.stringify(options))
+            return callback('HTTP ERROR: 400 REST API Request Error. Options: '+ options)
         }
         return callback(null, res);
     });
     // add error handler
     req.on("error", function(e){
-        callback(e + ", Request options: " + JSON.stringify(options));
+        callback(e + ", Request options: " + options);
     });
     // write stringified JSON data, if any
     if (data){
