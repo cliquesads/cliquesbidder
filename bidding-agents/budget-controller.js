@@ -153,7 +153,6 @@ BudgetController.prototype._sendAPIRequest = function(options, data, callback){
     req.end();
 };
 
-//
 /**
  * Creates new account with Banker.
  *
@@ -220,6 +219,24 @@ BudgetController.prototype.getSummary = function(callback){
     this._sendAPIRequest(options,callback);
 };
 
+/**
+ * Gets JSON summary of specified account's state
+ *
+ * @param {String} accountName name of account
+ * @param {Number} [maxDepth=unlimited] optionally specify maxDepth of tree to traverse
+ * @param callback
+ */
+BudgetController.prototype.getAccountSummary = function(accountName, maxDepth, callback){
+    if (arguments.length == 2){
+        callback = maxDepth;
+        maxDepth = null;
+    }
+    var options = this.collections.accounts.getRequestOptions({
+        path: [accountName, 'summary'].join('/'),
+        query : maxDepth ? { maxDepth: maxDepth} : null
+    });
+    this._sendAPIRequest(options,callback);
+};
 
 
 
@@ -235,8 +252,7 @@ var bc = new BudgetController(agentConfig);
 //    console.log(res);
 //});
 
-bc.getSummary(function(err, res){
+bc.getAccountSummary(bc.accountName, function(err, res){
     if (err) return console.log(err);
     console.log(res);
 });
-
