@@ -124,17 +124,28 @@ BankerRESTAPI.prototype._sendAPIRequest = function(options, data, callback){
         options.headers["Content-Type"] = "application/json";
         options.headers["Content-Length"] = data.length;
     }
-    console.log(options);
+
+    var options_str = 'path: '+options.path+', hostname: '+options.hostname+
+        ', port: '+options.port+', method: '+options.method;
+
     // now send request
     var req = http.request(options, function(res){
         if (res.statusCode == "400"){
-            return callback('HTTP ERROR: 400 REST API Request Error. Options: '+ options)
+            return callback('HTTP ERROR: 400 REST API Request Error at ' + options_str)
         }
-        return callback(null, res);
+        // handle response body data, pass to callback as JSON
+        var body = '';
+        res.on('data', function(chunk){
+            body += chunk;
+        });
+        res.on('end', function(){
+            return callback(null, JSON.parse(body));
+        });
     });
+
     // add error handler
     req.on("error", function(e){
-        callback(e + ", Request options: " + options);
+        callback(e + ", Request options: " + options_str);
     });
     // write stringified JSON data, if any
     if (data){
