@@ -73,7 +73,12 @@ BankerRESTAPI.prototype._getRequestOptions = function(collection_path, options){
     var path    = options.path;
     var headers = options.headers;
 
-    path = ['',this.apiVersion, collection_path, path].join('/');
+    var root_path_arr = ['',this.apiVersion, collection_path];
+    if (path) {
+        root_path_arr.push(path);
+    }
+    path = root_path_arr.join('/');
+
     if (query){
         path = [path, querystring.stringify(query)].join('?');
     }
