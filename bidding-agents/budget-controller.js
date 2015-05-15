@@ -33,6 +33,11 @@ BudgetController = exports.BudgetController = function(agentConfig, options){
     this.end_date       = this.agentConfig.targetingConfig.end_date;
     this.even_pacing    = this.agentConfig.targetingConfig.even_pacing;
 
+    // Handle namespacing of accounts
+    this.advertiserAccount  = this.accountsArray[0];
+    this.campaignAccount    = this.accountsArray[1];
+    this.accountName        = this.accountsArray.join(':');
+
     // Only two root paths in V1 API
     // Add _getRequestOptions functions pre-populated with collection paths
     // of each respective key
@@ -71,7 +76,7 @@ BudgetController.prototype.sendAPIRequest = function(options, data, callback){
     } else {
         // Set default JSON data headers, if data is provided
         data = JSON.stringify(data);
-        if (!options.hasOwnProperty(headers)) {
+        if (!options.hasOwnProperty("headers")) {
             options.headers = {};
         }
         options.headers["Content-Type"] = "application/json";
@@ -86,7 +91,7 @@ BudgetController.prototype.sendAPIRequest = function(options, data, callback){
     });
     // add error handler
     req.on("error", function(e){
-        callback(e);
+        callback(e + ", Request options: " + JSON.stringify(options));
     });
     // write stringified JSON data, if any
     if (data){
@@ -148,7 +153,8 @@ BudgetController.prototype._getRequestOptions = function(collection_path, option
 
 //
 /**
- * addAccount does a POST to /vi/accounts?accountType=budget&accountName=<accountName>
+ * Creates new account with Banker.
+ *
  * @param accountName
  * @param callback
  */
@@ -174,7 +180,7 @@ BudgetController.prototype.addAccount = function(accountName, callback){
 BudgetController.prototype.addBalanceToChildAccount = function(accountName, currency, amount, callback){
     var put_data = {};
     put_data[currency] = amount;
-    var options = self.collections.accounts.getRequestOptions({
+    var options = this.collections.accounts.getRequestOptions({
         path: [accountName, 'balance'].join('/'),
         query: {
             accountType: 'budget'
@@ -192,5 +198,10 @@ var fs = require('fs');
 var AgentConfig = require('./nodebidagent-config.js').AgentConfig;
 var agentConfig = AgentConfig.deserialize(fs.readFileSync('sample-agent-config.json', 'utf8'));
 var bc = new BudgetController(agentConfig);
-var opts = bc.collections.accounts.getRequestOptions({ path: 'budget', query: {"akey": "avalue", "something":"special"}});
-console.log(opts);
+//var opts = bc.collections.accounts.getRequestOptions({ path: 'budget', query: {"akey": "avalue", "something":"special"}});
+
+bc.addBalanceToChildAccount(bc.accountName, 'USD/1M', '380283930383', function(err, res){
+    if (err) return console.log(err);
+    console.log(res);
+});
+
