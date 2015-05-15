@@ -119,6 +119,7 @@ BankerRESTAPI.prototype._sendAPIRequest = function(options, data, callback){
         options.headers["Content-Type"] = "application/json";
         options.headers["Content-Length"] = data.length;
     }
+    console.log(options);
     // now send request
     var req = http.request(options, function(res){
         if (res.statusCode == "400"){
@@ -314,3 +315,6 @@ BankerRESTAPI.prototype.getSummary = function(callback){
     var options = this.collections.summary.getRequestOptions();
     this._sendAPIRequest(options,callback);
 };
+
+
+//testing
