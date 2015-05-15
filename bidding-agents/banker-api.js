@@ -290,7 +290,7 @@ BankerRESTAPI.prototype.getAccountSummary = function(accountName, maxDepth, call
  */
 BankerRESTAPI.prototype.getAccountSubtree = function(accountName, depth, callback){
     if (arguments.length === 2){
-        callback = maxDepth;
+        callback = depth;
         depth = null;
     }
     var options = this.collections.accounts.getRequestOptions({
@@ -309,7 +309,7 @@ BankerRESTAPI.prototype.getAccountSubtree = function(accountName, depth, callbac
  */
 BankerRESTAPI.prototype.getAccountChildren = function(accountName, depth, callback){
     if (arguments.length === 2){
-        callback = maxDepth;
+        callback = depth;
         depth = null;
     }
     var options = this.collections.accounts.getRequestOptions({
@@ -331,6 +331,3 @@ BankerRESTAPI.prototype.getSummary = function(callback){
     var options = this.collections.summary.getRequestOptions();
     this._sendAPIRequest(options,callback);
 };
-
-
-//testing
