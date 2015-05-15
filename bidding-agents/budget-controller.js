@@ -48,6 +48,54 @@ BudgetController = exports.BudgetController = function(agentConfig, options){
 };
 
 /**
+ * Wrapper method to send all API requests.
+ *
+ * Goal of this is to make options object as simple as possible to reduce redundancy.
+ *
+ * Only need to specify `path`,`query` and `method` params in options, this method
+ * will handle the rest, including stringifying data & setting headers if data is
+ * present.
+ *
+ * @param {Object} options further simplified options object
+ * @param {String} [options.path='/'] resource path, i.e. path relative to collection path
+ * @param {String} [options.query] query object
+ * @param {String} [options.method='GET'] HTTP method
+ * @param {Object} [options.headers] Request headers.  POST/PUT JSON data headers will be created automatically.
+ * @param {Object} [data=null] optional JSON data object to send with PUT/POST requests
+ * @param {Function} callback takes (err, response)
+ */
+BudgetController.prototype.sendAPIRequest = function(options, data, callback){
+    if (arguments.length == 2){
+        callback = data;
+        data = false;
+    } else {
+        // Set default JSON data headers, if data is provided
+        data = JSON.stringify(data);
+        if (!options.hasOwnProperty(headers)) {
+            options.headers = {};
+        }
+        options.headers["Content-Type"] = "application/json";
+        options.headers["Content-Length"] = data.length;
+    }
+    // now send request
+    var req = http.request(options, function(res){
+        if (res.statusCode == "400"){
+            return callback('HTTP ERROR: 400 REST API Request Error. Options: '+ JSON.stringify(options))
+        }
+        return callback(null, res);
+    });
+    // add error handler
+    req.on("error", function(e){
+        callback(e);
+    });
+    // write stringified JSON data, if any
+    if (data){
+        req.write(data);
+    }
+    req.end();
+};
+
+/**
  * Simple decorator for this._getRequest options to capture collection path
  * in closure.
  *
@@ -112,21 +160,12 @@ BudgetController.prototype.addAccount = function(accountName, callback){
             accountName: accountName
         }
     });
-    var req = http.request(options, function(res){
-        if (res.statusCode == "400"){
-            console.log("Add account ERROR 400");
-        }
-        callback(null, res);
-    });
-
-    req.on("error", function(e){
-        console.log(e.message);
-    });
-    req.end();
+    this.sendAPIRequest(options, callback);
 };
 
 /**
- * Does a PUT {currency:amount} to /v1/accounts/<account>/balance?accountType=budget
+ * Transfers budget to child account from parent (top-level)
+ *
  * @param accountName
  * @param currency
  * @param amount
@@ -134,33 +173,19 @@ BudgetController.prototype.addAccount = function(accountName, callback){
  */
 BudgetController.prototype.addBalanceToChildAccount = function(accountName, currency, amount, callback){
     var put_data = {};
-    put_data[accountName] = currency;
-    put_data = JSON.stringify(put_data);
-
+    put_data[currency] = amount;
     var options = self.collections.accounts.getRequestOptions({
-        headers : {
-            "Content-Type":"application/json",
-            "Content-Length":put_data.length
-        },
-        path: [accountName, balance].join('/'),
+        path: [accountName, 'balance'].join('/'),
         query: {
             accountType: 'budget'
-        }
+        },
+        method: 'PUT'
     });
-    var req = http.request(options, function(res){
-        if (res.statusCode == "400"){
-            console.log("Top up ERROR 400");
-        }
-        callback(null, res);
-    });
-
-    req.on("error", function(e){
-    console.log("ERROR with topupTransferSync in budget-controller.js", e);
-        callback(e);
-    });
-    req.write(put_data);
-    req.end();
+    this.sendAPIRequest(options, put_data, callback)
 };
+
+
+
 
 // TESTING ONLY
 var fs = require('fs');
