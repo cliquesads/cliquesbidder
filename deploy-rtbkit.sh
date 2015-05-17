@@ -73,7 +73,6 @@ fi
 
 #launch the bidder itself
 if ! pgrep tmux; then
-    ./build/x86_64/bin/launcher --node localhost --script ./launch.sh cliquesconfig/launch.json
     ./launch.sh
 else
     echo "RTBKit Core is is already running, skipping..."
