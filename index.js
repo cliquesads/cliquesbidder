@@ -176,6 +176,7 @@ function getAgentConfig(campaign_id, callback){
         return callback(null, agentConfig.serialize(), campaign);
     });
 }
+exports.getAgentConfig = getAgentConfig;
 
 /* ------------------ CONTROLLER CLASS ------------------- */
 
