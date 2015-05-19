@@ -5,6 +5,7 @@ var googleAuth = node_utils.google.auth;
 var logging = require('./lib/bidder_logging.js');
 var pubsub = node_utils.google.pubsub;
 var AgentConfig = require('./bidding-agents/nodebidagent-config.js').AgentConfig;
+var BidAgentAccount = require('./bidding-agents/nodebidagent-config.js').BidAgentAccount;
 
 var config = require('config');
 var path = require('path');
@@ -100,9 +101,10 @@ function _parseCoreConfig(campaign, options){
 
     // tag object used to generate creative markup from config stored in DB
     var tag = new tags.ImpTag(ADSERVER_HOST, { port: ADSERVER_PORT});
+    var account = new BidAgentAccount(campaign.id);
 
     var coreConfig = {
-        account: [campaign.parent_advertiser.id,campaign.id],
+        account: account.accountArray,
         bidProbability: bidProbability,
         providerConfig: {
             cliques: {
@@ -144,7 +146,10 @@ function _parseTargetingConfig(campaign){
         max_bid: campaign.max_bid,
         country_targets: campaign.country_targets,
         dma_targets: campaign.dma_targets,
-        placement_targets: campaign.placement_targets
+        placement_targets: campaign.placement_targets,
+        start_date: campaign.start_date,
+        end_date: campaign.end_date,
+        even_pacing: campaign.even_pacing
     };
 }
 
@@ -367,3 +372,16 @@ bidderPubSub.subscriptions.stopBidder(function(err, subscription){
         logger.error(err);
     });
 });
+
+//mongo_connection.once('open', function(callback){
+//    advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
+//    getAgentConfig('553176cb469cbc6e40e28687', function(err, ser, campaign){
+//        fs.writeFile('./bidding-agents/sample-agent-config.json', ser, 'utf8', function(err){
+//            if (err) {
+//                console.log(err);
+//            } else {
+//                console.log('All Done!');
+//            }
+//        });
+//    });
+//});

@@ -382,7 +382,7 @@ exports.cb = function(v){
   return function(err, res){
       if (err) return console.log(err);
       v = res;
-      console.log(res);
+      return console.log(res);
   }
 };
 exports.campaign = ['553176cb469cbc6e40e28689', '553176cb469cbc6e40e28687'].join(':');
