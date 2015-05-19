@@ -149,7 +149,8 @@ function _parseTargetingConfig(campaign){
         placement_targets: campaign.placement_targets,
         start_date: campaign.start_date,
         end_date: campaign.end_date,
-        even_pacing: campaign.even_pacing
+        even_pacing: campaign.even_pacing,
+        budget: campaign.budget
     };
 }
 
