@@ -28,7 +28,7 @@ Account.prototype.effectiveBudget = function(currency){
     var recycledIn      = this.recycledIn[currency]      || 0;
     var recycledOut     = this.recycledOut[currency]     || 0;
     var allocatedIn     = this.allocatedIn[currency]     || 0;
-    var allocatedOut    = this.allocatedIn[currency]     || 0;
+    var allocatedOut    = this.allocatedOut[currency]     || 0;
     return budgetIncreases - budgetDecreases + recycledIn -
         recycledOut + allocatedIn - allocatedOut;
 };
