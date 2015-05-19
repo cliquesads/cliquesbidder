@@ -2,7 +2,7 @@
 
 var RTBkit = require('./../rtbkit/bin/rtb');
 var services_lib = require('./../rtbkit/bin/services');
-var budgetController = require('./budget-controller');
+var BudgetController = require('./budget-controller').BudgetController;
 
 /* ------------------ Parse initial configuration -------------- */
 var AgentConfig = require('./nodebidagent-config').AgentConfig;
@@ -25,6 +25,20 @@ services.useZookeeper(zookeeperUri,"rtb-test", "mtl");
 // yes, we want to log to carbon
 services.logToCarbon(envConfig["carbon-uri"]);
 
+/* ----------------- Budget Controller ---------------------------*/
+var budgetController = new BudgetController(agentConfig);
+var budget = targetingConfig.budget;
+budgetController.setCampaignBudget(budget, function(err, account){
+    if (err) return console.log(err);
+    // temporary logging
+    console.log('Campaign account budget set: ' + account);
+});
+budgetController.pace(budget, 15000, function(err, child_account){
+    if (err) return console.log(err);
+    // temporary logging
+    console.log('Pacer account topped up: ' + child_account);
+});
+
 /* ----------------- Agent Init & Event Handlers ------------------ */
 
 var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
@@ -42,6 +56,18 @@ process.stdin.on('data', function(data){
     targetingConfig = agentConfig.targetingConfig;
     // send new config to core
     agent.doConfig(coreConfig);
+
+    budget = targetingConfig.budget;
+    budgetController.setCampaignBudget(budget, function(err, account){
+        if (err) return console.log(err);
+        // temporary logging
+        console.log('Campaign account budget set: ' + account);
+    });
+    budgetController.pace(budget, 15000, function(err, child_account){
+        if (err) return console.log(err);
+        // temporary logging
+        console.log('Pacer account topped up: ' + child_account);
+    });
 });
 
 /**
@@ -292,35 +318,35 @@ process.on('SIGUSR2', function(){
 //---------------------------------
 // Handlers for budget manipulation
 //---------------------------------
-
-var addAccountHandler = function(err, res){
-    if (err) {
-        console.log("Error adding account " + accountFullName);
-        //logger.error(err);
-        console.log(err);
-    }
-};
-
-var topupErrorHandler = function(err, res){
-    if (err) {
-        // TODO: Handle an error topping up the account.
-        console.log("Error topping up "+accountFullName);
-        // shutdown with an error
-        process.exit(1);
-    }
-};
-
-// Keep the budget for this subaccount topped up
-var pace = function(){
-    if (!accountAdded){
-        budgetController.addAccount(accountParent, addAccountHandler);
-        accountAdded = true;
-    }
-    // Transfer 10 cents every time we pace
-
-    // TODO: Add pacing logic here, transferring budget from parent
-    budgetController.topupTransferSync(accountFullName, "USD/1M", 100000, topupErrorHandler);
-};
+//
+//var addAccountHandler = function(err, res){
+//    if (err) {
+//        console.log("Error adding account " + accountFullName);
+//        //logger.error(err);
+//        console.log(err);
+//    }
+//};
+//
+//var topupErrorHandler = function(err, res){
+//    if (err) {
+//        // TODO: Handle an error topping up the account.
+//        console.log("Error topping up "+accountFullName);
+//        // shutdown with an error
+//        process.exit(1);
+//    }
+//};
+//
+//// Keep the budget for this subaccount topped up
+//var pace = function(){
+//    if (!accountAdded){
+//        budgetController.addAccount(accountParent, addAccountHandler);
+//        accountAdded = true;
+//    }
+//    // Transfer 10 cents every time we pace
+//
+//    // TODO: Add pacing logic here, transferring budget from parent
+//    budgetController.topupTransferSync(accountFullName, "USD/1M", 100000, topupErrorHandler);
+//};
 
 //-------------------------
 // Initialize agent
@@ -331,5 +357,5 @@ agent.start();
 
 agent.doConfig(coreConfig);
 // Start pacing the budget inflow for this bid agent
-pace();
-interval = setInterval(pace,10000);
+//pace();
+//interval = setInterval(pace,10000);
