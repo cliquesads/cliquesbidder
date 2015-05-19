@@ -7,6 +7,47 @@ var querystring = require("querystring");
 var url = require('url');
 
 /**
+ * Lightweight class too wrap Banker JSON representation of account
+ *
+ * Provides methods to derive various useful properties not explicitly
+ * stored in Banker DB
+ *
+ * @param account
+ * @constructor
+ */
+var Account = function(account){
+    for (var key in account) {
+        if (account.hasOwnProperty(key)) {
+            this[key] = account[key];
+        }
+    }
+};
+Account.prototype.effectiveBudget = function(currency){
+    var budgetIncreases = this.budgetIncreases[currency] || 0;
+    var budgetDecreases = this.budgetDecreases[currency] || 0;
+    var recycledIn      = this.recycledIn[currency]      || 0;
+    var recycledOut     = this.recycledOut[currency]     || 0;
+    var allocatedIn     = this.allocatedIn[currency]     || 0;
+    var allocatedOut    = this.allocatedIn[currency]     || 0;
+    return budgetIncreases - budgetDecreases + recycledIn -
+        recycledOut + allocatedIn - allocatedOut;
+};
+
+/**
+ * Wraps generic callback function accepting (err, obj) and instantiates
+ * new Account with returned JSON object
+ *
+ * @param func
+ * @returns {Function}
+ */
+function accountCallbackDecorator(func){
+    return function(err, account_json){
+        var account = new Account(account_json);
+        return func(err, account);
+    }
+}
+
+/**
  * Wrapper for the MasterBanker REST API.
  *
  * @param {AgentConfig} agentConfig instance of AgentConfig class
@@ -174,7 +215,8 @@ BankerRESTAPI.prototype.createAccount = function(accountName, callback){
             accountName: accountName
         }
     });
-    this._sendAPIRequest(options, callback);
+    var wrapped = accountCallbackDecorator(callback);
+    this._sendAPIRequest(options, wrapped);
 };
 
 /**
@@ -257,7 +299,8 @@ BankerRESTAPI.prototype.getAccount = function(accountName, callback){
     var options = this.collections.accounts.getRequestOptions({
         path: accountName
     });
-    this._sendAPIRequest(options,callback);
+    var wrapped = accountCallbackDecorator(callback);
+    this._sendAPIRequest(options,wrapped);
 };
 
 /**
