@@ -22,15 +22,14 @@ var Account = function(account){
         }
     }
 };
-Account.prototype.effectiveBudget = function(currency){
+Account.prototype.getBudget = function(currency){
     var budgetIncreases = this.budgetIncreases[currency] || 0;
     var budgetDecreases = this.budgetDecreases[currency] || 0;
-    var recycledIn      = this.recycledIn[currency]      || 0;
-    var recycledOut     = this.recycledOut[currency]     || 0;
-    var allocatedIn     = this.allocatedIn[currency]     || 0;
-    var allocatedOut    = this.allocatedOut[currency]     || 0;
-    return budgetIncreases - budgetDecreases + recycledIn -
-        recycledOut + allocatedIn - allocatedOut;
+    //var recycledIn      = this.recycledIn[currency]      || 0;
+    //var recycledOut     = this.recycledOut[currency]     || 0;
+    //var allocatedIn     = this.allocatedIn[currency]     || 0;
+    //var allocatedOut    = this.allocatedOut[currency]    || 0;
+    return budgetIncreases - budgetDecreases;
 };
 
 /**
@@ -239,7 +238,8 @@ BankerRESTAPI.prototype.setChildAccountBalance = function(accountName, currency,
         },
         method: 'PUT'
     });
-    this._sendAPIRequest(options, put_data, callback);
+    var wrapped = accountCallbackDecorator(callback);
+    this._sendAPIRequest(options, put_data, wrapped);
 };
 
 /**
@@ -258,7 +258,8 @@ BankerRESTAPI.prototype.setAccountBudget = function(accountName, currency, amoun
         path: [accountName, 'budget'].join('/'),
         method: 'POST'
     });
-    this._sendAPIRequest(options, data, callback);
+    var wrapped = accountCallbackDecorator(callback);
+    this._sendAPIRequest(options, data, wrapped);
 };
 
 /**
@@ -374,3 +375,15 @@ BankerRESTAPI.prototype.getSummary = function(callback){
     var options = this.collections.summary.getRequestOptions();
     this._sendAPIRequest(options,callback);
 };
+
+//Just for testing
+exports.client = new BankerRESTAPI();
+exports.cb = function(v){
+  return function(err, res){
+      if (err) return console.log(err);
+      v = res;
+      console.log(res);
+  }
+};
+exports.campaign = ['553176cb469cbc6e40e28689', '553176cb469cbc6e40e28687'].join(':');
+exports.advertiser = '553176cb469cbc6e40e28689';
