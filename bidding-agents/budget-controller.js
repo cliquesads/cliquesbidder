@@ -64,7 +64,7 @@ CampaignBudgetController.prototype.setCampaignBudget = function(budget, callback
     var campaignAccountName = this.bidAgentAccount.campaignAccountName;
     console.log('Setting campaign budget for campaign ID ' + campaignAccountName);
     // Convert budget in USD to micro USD
-    budget = self.convertBudget(budget);
+    budget = CampaignBudgetController.convertBudget(budget);
     // finally, set budget in parent account.
     self.apiClient.setAccountBudget(campaignAccountName,self.currency,budget,function(err,account){
         if (err) return callback(err);

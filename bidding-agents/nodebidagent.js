@@ -17,7 +17,7 @@ var envConfig = agentConfig.envConfig;
 
 var zookeeperUri = envConfig["zookeeper-uri"], // must point to same Zookeeper as routers
     services = new services_lib.ServiceProxies(),
-    accountAdded = false,
+    //accountAdded = false,
     interval;
     
 // uri,install name and location from bootstrap.json
@@ -26,6 +26,7 @@ services.useZookeeper(zookeeperUri,"rtb-test", "mtl");
 services.logToCarbon(envConfig["carbon-uri"]);
 
 /* ----------------- Budget Controller ---------------------------*/
+
 var budgetController = new BudgetController(agentConfig);
 var budget = targetingConfig.budget;
 budgetController.setCampaignBudget(budget, function(err, account){
@@ -45,8 +46,8 @@ var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
 // You can skip overriding some of these handlers by setting strictMode(false);
 
 //setup account namespacing
-var accountParent = coreConfig.account[0];
-var accountFullName = coreConfig.account.join(":");
+//var accountParent = coreConfig.account[0];
+//var accountFullName = coreConfig.account.join(":");
 
 // add listener for config changes passed by controller
 process.stdin.resume();
@@ -59,7 +60,7 @@ process.stdin.on('data', function(data){
 
     budget = targetingConfig.budget;
     budgetController.setCampaignBudget(budget, function(err, account){
-        if (err) return console.log(err);
+        if (err) return console.log(err);ssh
         // temporary logging
         console.log('Campaign account budget set: ' + account);
     });
