@@ -60,7 +60,7 @@ process.stdin.on('data', function(data){
 
     budget = targetingConfig.budget;
     budgetController.setCampaignBudget(budget, function(err, account){
-        if (err) return console.log(err);ssh
+        if (err) return console.log(err);
         // temporary logging
         console.log('Campaign account budget set: ' + account);
     });
