@@ -84,7 +84,7 @@ CampaignBudgetController.prototype.setCampaignBudget = function(budget, callback
  */
 CampaignBudgetController.prototype.pace = function(budget, interval_in_ms, callback){
     var self = this;
-    budget = self.convertBudget(budget);
+    budget = CampaignBudgetController.convertBudget(budget);
     // sub-function that does the actual API call to transfer budget from parent to child
     function _transfer_budget(amount){
         self.apiClient.setChildAccountBalance(self.bidAgentAccount.accountName,self.currency,amount,function(err, child_account){
