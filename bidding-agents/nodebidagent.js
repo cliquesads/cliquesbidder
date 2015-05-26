@@ -32,12 +32,12 @@ var budget = targetingConfig.budget;
 budgetController.setCampaignBudget(budget, function(err, account){
     if (err) return console.log(err);
     // temporary logging
-    console.log('Campaign account budget set: ' + account);
+    console.log('Campaign account budget set: ' + JSON.stringify(account));
 });
 budgetController.pace(budget, 15000, function(err, child_account){
     if (err) return console.log(err);
     // temporary logging
-    console.log('Pacer account topped up: ' + child_account);
+    console.log('Pacer account topped up: ' + JSON.stringify(child_account));
 });
 
 /* ----------------- Agent Init & Event Handlers ------------------ */
