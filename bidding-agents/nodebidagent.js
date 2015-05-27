@@ -27,6 +27,7 @@ services.logToCarbon(envConfig["carbon-uri"]);
 
 /* ----------------- Budget Controller ---------------------------*/
 
+var interval_in_ms = 15000;
 var budgetController = new BudgetController(agentConfig);
 var budget = targetingConfig.budget;
 budgetController.setCampaignBudget(budget, function(err, account){
@@ -34,10 +35,10 @@ budgetController.setCampaignBudget(budget, function(err, account){
     // temporary logging
     console.log('Campaign account budget set: ' + JSON.stringify(account));
 });
-budgetController.pace(budget, 15000, function(err, child_account){
+budgetController.pace(budget, interval_in_ms, function(err, child_account){
     if (err) return console.log(err);
     // temporary logging
-    console.log('Pacer account topped up: ' + JSON.stringify(child_account));
+    //console.log('Pacer account topped up: ' + JSON.stringify(child_account));
 });
 
 /* ----------------- Agent Init & Event Handlers ------------------ */
@@ -64,10 +65,10 @@ process.stdin.on('data', function(data){
         // temporary logging
         console.log('Campaign account budget set: ' + JSON.stringify(account));
     });
-    budgetController.pace(budget, 15000, function(err, child_account){
+    budgetController.pace(budget, interval_in_ms, function(err, child_account){
         if (err) return console.log(err);
         // temporary logging
-        console.log('Pacer account topped up: ' + JSON.stringify(child_account));
+        //console.log('Pacer account topped up: ' + JSON.stringify(child_account));
     });
 });
 

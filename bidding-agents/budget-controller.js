@@ -87,12 +87,10 @@ CampaignBudgetController.prototype.pace = function(budget, interval_in_ms, callb
     budget = CampaignBudgetController.convertBudget(budget);
     // sub-function that does the actual API call to transfer budget from parent to child
     function _transfer_budget(amount){
-        self.apiClient.setChildAccountBalance(self.bidAgentAccount.accountName,self.currency,amount,function(err, child_account){
+        self.apiClient.setChildAccountBalance(self.bidAgentAccount.accountName,self.currency,amount,function(err,child_account){
             if (err){
                 return callback ? callback(err) : console.log(err);
             }
-            console.log("pacerAccount updated: " + self.currency + " " + amount);
-            console.log(child_account);
             return callback ? callback(null, child_account): null
         });
     }
