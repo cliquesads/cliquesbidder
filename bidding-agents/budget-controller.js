@@ -47,7 +47,7 @@ CampaignBudgetController.prototype.init = function(){
         if (account.budgetIncreases === {}){
             console.log('New account created with Banker: ' + accountName);
         } else {
-            console.log('Account '+accountName+'found');
+            console.log('Account: '+accountName+' found');
         }
     });
 };
@@ -68,7 +68,7 @@ CampaignBudgetController.prototype.setCampaignBudget = function(budget, callback
     // finally, set budget in parent account.
     self.apiClient.setAccountBudget(campaignAccountName,self.currency,budget,function(err,account){
         if (err) return callback(err);
-        console.log('Budget for account'+campaignAccountName+'updated to '+account.getBudget(self.currency));
+        console.log('Budget for account '+campaignAccountName+' updated to '+account.getBudget(self.currency));
         return callback(null, account);
     });
 };
@@ -91,6 +91,8 @@ CampaignBudgetController.prototype.pace = function(budget, interval_in_ms, callb
             if (err){
                 return callback ? callback(err) : console.log(err);
             }
+            console.log("pacerAccount updated: " + self.currency + " " + amount);
+            console.log(child_account);
             return callback ? callback(null, child_account): null
         });
     }
@@ -99,7 +101,7 @@ CampaignBudgetController.prototype.pace = function(budget, interval_in_ms, callb
         var duration = self.end_date - self.start_date;
         // take floor of quotient, dont think this should cause any significant
         // rounding errors as we're rounding fractions of a micro dollar
-        var transfer_amount = Math.floor(budget / duration) * interval_in_ms;
+        var transfer_amount = Math.floor(budget / duration * interval_in_ms);
         // Top up now and set top_up for interval schedule
         _transfer_budget(transfer_amount);
         setInterval(_transfer_budget, interval_in_ms, transfer_amount);
