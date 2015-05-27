@@ -2,7 +2,7 @@
 
 var RTBkit = require('./../rtbkit/bin/rtb');
 var services_lib = require('./../rtbkit/bin/services');
-var BudgetController = require('./budget-controller').BudgetController;
+var CampaignBudgetController = require('./budget-controller').CampaignBudgetController;
 
 //================================================================//
 //================ PARSE INITIAL CONFIGURATION ===================//
@@ -32,22 +32,13 @@ services.useZookeeper(zookeeperUri,"rtb-test", "mtl");
 services.logToCarbon(envConfig["carbon-uri"]);
 
 
-//================================================================//
-//================== RTBKIT VARS & SERVICES ======================//
-//================================================================//
+//==================================================================//
+//================= INITIALIZE BUDGET CONTROLLER ===================//
+//==================================================================//
 
 var INTERVAL_IN_MS = 15000; //interval to set for pacer in milliseconds
-var budgetController = new BudgetController(agentConfig);
-var budget = targetingConfig.budget;
-budgetController.setCampaignBudget(budget, function(err, account){
-    if (err) return console.log(err);
-    // temporary logging
-    console.log('Campaign account budget set: ' + JSON.stringify(account));
-});
-budgetController.pace(budget, INTERVAL_IN_MS, function(err, child_account){
-    if (err) return console.log(err);
-});
-
+var budgetController = new CampaignBudgetController(coreConfig.account, INTERVAL_IN_MS);
+budgetController.configure_and_run(agentConfig);
 
 //================================================================//
 //================ AGENT INIT & EVENT HANDLERS ===================//
@@ -295,15 +286,8 @@ process.stdin.on('data', function(data){
     // send new config to core
     agent.doConfig(coreConfig);
 
-    budget = targetingConfig.budget;
-    budgetController.setCampaignBudget(budget, function(err, account){
-        if (err) return console.log(err);
-        // temporary logging
-        console.log('Campaign account budget set: ' + JSON.stringify(account));
-    });
-    budgetController.pace(budget, INTERVAL_IN_MS, function(err, child_account){
-        if (err) return console.log(err);
-    });
+    // reconfigure budgetController and run
+    budgetController.configure_and_run(agentConfig);
 });
 
 // Handle kill signal sent by controller, shut down BidAgent

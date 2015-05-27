@@ -374,16 +374,3 @@ bidderPubSub.subscriptions.stopBidder(function(err, subscription){
         logger.error(err);
     });
 });
-
-//mongo_connection.once('open', function(callback){
-//    advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
-//    getAgentConfig('553176cb469cbc6e40e28687', function(err, ser, campaign){
-//        fs.writeFile('./bidding-agents/sample-agent-config.json', ser, 'utf8', function(err){
-//            if (err) {
-//                console.log(err);
-//            } else {
-//                console.log('All Done!');
-//            }
-//        });
-//    });
-//});
