@@ -54,6 +54,7 @@ CampaignBudgetController.prototype.init = function(){
  * @param agentConfig
  */
 CampaignBudgetController.prototype.configure_and_run = function(agentConfig){
+    var self = this;
     // First, configure controller
     this.agentConfig    = agentConfig;
     // parse dates into ms since epoch
@@ -66,7 +67,7 @@ CampaignBudgetController.prototype.configure_and_run = function(agentConfig){
 
     // set parent account budget in banker
     var campaignAccountName = this.bidAgentAccount.campaignAccountName;
-    this.apiClient.setAccountBudget(campaignAccountName,self.currency,self.budget,function(err,account){
+    this.apiClient.setAccountBudget(campaignAccountName,this.currency,this.budget,function(err,account){
         if (err) return console.log(err);
         console.log('Budget for account '+ campaignAccountName +' updated to '+account.getBudget(self.currency));
     });
@@ -111,6 +112,7 @@ CampaignBudgetController.convertBudget = function(budget){
  * @private
  */
 CampaignBudgetController.prototype._getTransferAmount = function(){
+    var self = this;
     var transfer_amount = this.budget;
     if (this.even_pacing){
         // Do even pacing math
