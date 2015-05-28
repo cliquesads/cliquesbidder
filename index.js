@@ -196,6 +196,10 @@ exports.getAgentConfig = getAgentConfig;
  *
  * NOTE: Assumes strict 1-1 mapping between campaign objects and bidagents.
  *
+ * Will also persist campaigns for which agents are currently running Redis so that,
+ * in the event of a process crash or termination, agents can be started back
+ * up again automatically.
+ *
  * @param {Object} [redisClient]
  * @class
  * @private
@@ -203,16 +207,13 @@ exports.getAgentConfig = getAgentConfig;
 var _Controller = function(redisClient){
     //Path to bidagent executable script
     this.BIDAGENT_EXECUTABLE = './bidding-agents/nodebidagent.js';
-    // TODO: might want to make this object contain campaign-keyed configs / PID's
-    // TODO: instead of child process objects so that they can be re-spawned in the event
-    // TODO: of a server fault.  Would have to persist this object somewhere like redis,
-    // TODO: mongo, whatever
     this.redisClient = redisClient || redis.createClient();
-
     // internal object to store mapping of campaign ID's to processes
     this.bidAgents = {};
 
     // if campaigns provided, create bidAgents for each campaignId.
+    // persistence to redis allows for auto recovery of bidagents if the controller
+    // crashes or something
     var self = this;
     this.REDIS_CAMPAIGNS_KEY = 'bidagent_campaigns';
     this.redisClient.SMEMBERS(this.REDIS_CAMPAIGNS_KEY, function(err, campaigns){
