@@ -11,12 +11,15 @@ var config = require('config');
 var path = require('path');
 var winston = require('winston');
 var util = require('util');
+var redis = require('redis');
 var fs = require('fs');
 var jsonminify = require('jsonminify');
 var child_process = require('child_process');
 
 
-/* ------------------- LOGGER ------------------------ */
+/* ------------------- LOGGER & REDIS ------------------------ */
+var REDIS_PORT = 6380;
+var redisClient = redis.createClient(REDIS_PORT, '127.0.0.1');
 
 var logfile = path.join(
     process.env['HOME'],
@@ -189,22 +192,40 @@ exports.getAgentConfig = getAgentConfig;
  *
  * NOTE: Assumes strict 1-1 mapping between campaign objects and bidagents.
  *
- * @param {Object} [bidAgents={}] optional mapping between campaign_ids and agent processes.
- * @constructor
+ * @param {Object} [redisClient]
+ * @class
  * @private
  */
-var _Controller = function(bidAgents){
+var _Controller = function(redisClient){
     //Path to bidagent executable script
     this.BIDAGENT_EXECUTABLE = './bidding-agents/nodebidagent.js';
     // TODO: might want to make this object contain campaign-keyed configs / PID's
     // TODO: instead of child process objects so that they can be re-spawned in the event
     // TODO: of a server fault.  Would have to persist this object somewhere like redis,
     // TODO: mongo, whatever
-    this.bidAgents = bidAgents || {};
+    this.redisClient = redisClient || redis.createClient();
+
+    // internal object to store mapping of campaign ID's to processes
+    this.bidAgents = {};
+
+    // if campaigns provided, create bidAgents for each campaignId.
+    var self = this;
+    this.REDIS_CAMPAIGNS_KEY = 'bidagent_campaigns';
+    this.redisClient.SMEMBERS(this.REDIS_CAMPAIGNS_KEY, function(err, campaigns){
+        if (err) throw new Error('Error retrieving campaigns from redis: ' + err);
+        if (campaigns.length > 0){
+            campaigns.forEach(function(campaign_id){
+                self.createBidAgent(campaign_id);
+            });
+        }
+    });
 };
 
 _Controller.prototype._registerBidAgent = function(campaign_id, bidAgent){
     this.bidAgents[campaign_id] = bidAgent;
+    this.redisClient.SADD(this.REDIS_CAMPAIGNS_KEY, campaign_id, function(err, res){
+        if (err) throw new Error("Error adding campaign ID to redis: " + err);
+    })
 };
 
 _Controller.prototype._getBidAgent = function(campaign_id){
@@ -213,6 +234,9 @@ _Controller.prototype._getBidAgent = function(campaign_id){
 
 _Controller.prototype._deleteBidAgent = function(campaign_id){
     delete(this.bidAgents[campaign_id]);
+    this.redisClient.SREM(this.REDIS_CAMPAIGNS_KEY, campaign_id, function(err, res){
+        if (err) throw new Error("Error removing campaign ID from redis: " + err);
+    })
 };
 
 /**
@@ -306,8 +330,9 @@ _Controller.prototype.stopBidAgent = function(campaign_id){
     self._deleteBidAgent(campaign_id);
 };
 
-// Instantiate empty controller
-var controller = new _Controller();
+/* -------------------- CONTROLLER INIT ---------------------- */
+// Use redis to store list of campaigns for currently active
+var controller = new _Controller(redisClient);
 
 
 /* ---------------- BIDDER PUBSUB INSTANCE & LISTENERS ----------------- */
