@@ -5,17 +5,21 @@ var googleAuth = node_utils.google.auth;
 var logging = require('./lib/bidder_logging.js');
 var pubsub = node_utils.google.pubsub;
 var AgentConfig = require('./bidding-agents/nodebidagent-config.js').AgentConfig;
+var BidAgentAccount = require('./bidding-agents/nodebidagent-config.js').BidAgentAccount;
 
 var config = require('config');
 var path = require('path');
 var winston = require('winston');
 var util = require('util');
+var redis = require('redis');
 var fs = require('fs');
 var jsonminify = require('jsonminify');
 var child_process = require('child_process');
 
 
-/* ------------------- LOGGER ------------------------ */
+/* ------------------- LOGGER & REDIS ------------------------ */
+var REDIS_PORT = 6380;
+var redisClient = redis.createClient(REDIS_PORT, '127.0.0.1');
 
 var logfile = path.join(
     process.env['HOME'],
@@ -56,8 +60,12 @@ var mongo_connection = node_utils.mongodb.createConnectionWrapper(mongoURI, mong
 // TODO: technically if subscriber gets a message before the connection opens,
 // TODO: any reference to these models will fail.
 var advertiserModels;
+var controller;
 mongo_connection.once('open', function(callback){
     advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
+    /* -------------------- CONTROLLER INIT ---------------------- */
+    // Use redis to store list of campaigns for currently active
+    controller = new _Controller(redisClient);
 });
 
 /* -------------------- BIDAGENT CONFIGURATION -------------- */
@@ -100,9 +108,10 @@ function _parseCoreConfig(campaign, options){
 
     // tag object used to generate creative markup from config stored in DB
     var tag = new tags.ImpTag(ADSERVER_HOST, { port: ADSERVER_PORT});
+    var account = new BidAgentAccount(campaign.id);
 
     var coreConfig = {
-        account: [campaign.parent_advertiser.id,campaign.id],
+        account: account.accountArray,
         bidProbability: bidProbability,
         providerConfig: {
             cliques: {
@@ -144,7 +153,11 @@ function _parseTargetingConfig(campaign){
         max_bid: campaign.max_bid,
         country_targets: campaign.country_targets,
         dma_targets: campaign.dma_targets,
-        placement_targets: campaign.placement_targets
+        placement_targets: campaign.placement_targets,
+        start_date: campaign.start_date,
+        end_date: campaign.end_date,
+        even_pacing: campaign.even_pacing,
+        budget: campaign.budget
     };
 }
 
@@ -171,6 +184,7 @@ function getAgentConfig(campaign_id, callback){
         return callback(null, agentConfig.serialize(), campaign);
     });
 }
+exports.getAgentConfig = getAgentConfig;
 
 /* ------------------ CONTROLLER CLASS ------------------- */
 
@@ -182,22 +196,41 @@ function getAgentConfig(campaign_id, callback){
  *
  * NOTE: Assumes strict 1-1 mapping between campaign objects and bidagents.
  *
- * @param {Object} [bidAgents={}] optional mapping between campaign_ids and agent processes.
- * @constructor
+ * Will also persist campaigns for which agents are currently running Redis so that,
+ * in the event of a process crash or termination, agents can be started back
+ * up again automatically.
+ *
+ * @param {Object} [redisClient]
+ * @class
  * @private
  */
-var _Controller = function(bidAgents){
+var _Controller = function(redisClient){
     //Path to bidagent executable script
     this.BIDAGENT_EXECUTABLE = './bidding-agents/nodebidagent.js';
-    // TODO: might want to make this object contain campaign-keyed configs / PID's
-    // TODO: instead of child process objects so that they can be re-spawned in the event
-    // TODO: of a server fault.  Would have to persist this object somewhere like redis,
-    // TODO: mongo, whatever
-    this.bidAgents = bidAgents || {};
+    this.redisClient = redisClient || redis.createClient();
+    // internal object to store mapping of campaign ID's to processes
+    this.bidAgents = {};
+
+    // if campaigns provided, create bidAgents for each campaignId.
+    // persistence to redis allows for auto recovery of bidagents if the controller
+    // crashes or something
+    var self = this;
+    this.REDIS_CAMPAIGNS_KEY = 'bidagent_campaigns';
+    this.redisClient.SMEMBERS(this.REDIS_CAMPAIGNS_KEY, function(err, campaigns){
+        if (err) throw new Error('Error retrieving campaigns from redis: ' + err);
+        if (campaigns.length > 0){
+            campaigns.forEach(function(campaign_id){
+                self.createBidAgent(campaign_id);
+            });
+        }
+    });
 };
 
 _Controller.prototype._registerBidAgent = function(campaign_id, bidAgent){
     this.bidAgents[campaign_id] = bidAgent;
+    this.redisClient.SADD(this.REDIS_CAMPAIGNS_KEY, campaign_id, function(err, res){
+        if (err) throw new Error("Error adding campaign ID to redis: " + err);
+    })
 };
 
 _Controller.prototype._getBidAgent = function(campaign_id){
@@ -206,6 +239,9 @@ _Controller.prototype._getBidAgent = function(campaign_id){
 
 _Controller.prototype._deleteBidAgent = function(campaign_id){
     delete(this.bidAgents[campaign_id]);
+    this.redisClient.SREM(this.REDIS_CAMPAIGNS_KEY, campaign_id, function(err, res){
+        if (err) throw new Error("Error removing campaign ID from redis: " + err);
+    })
 };
 
 /**
@@ -298,10 +334,6 @@ _Controller.prototype.stopBidAgent = function(campaign_id){
     agent.kill('SIGUSR2');
     self._deleteBidAgent(campaign_id);
 };
-
-// Instantiate empty controller
-var controller = new _Controller();
-
 
 /* ---------------- BIDDER PUBSUB INSTANCE & LISTENERS ----------------- */
 

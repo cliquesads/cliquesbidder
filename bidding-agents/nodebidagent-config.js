@@ -1,4 +1,23 @@
 /**
+ * Very lightweight class to centralize baker account naming taxonomy
+ *
+ * @param campaign_id ObjectID from mongo of Campaign object
+ * @constructor
+ * @class
+ */
+var BidAgentAccount = function(campaign_id){
+    var PACER_ACCONT_NAME = exports.PACER_ACCOUNT_NAME = 'pacerAccount';
+    this.accountArray           = [campaign_id, PACER_ACCONT_NAME];
+    this.accountName            = this.accountArray.join(':');
+    this.campaignAccountName    = campaign_id;
+};
+BidAgentAccount.fromArray = function(accountArray){
+    return new BidAgentAccount(accountArray[0]);
+};
+exports.BidAgentAccount = BidAgentAccount;
+
+
+/**
  * Lightweight class to centralize serialization/deserialization methods
  * for bidder agent configs.
  *

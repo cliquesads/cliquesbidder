@@ -2,9 +2,12 @@
 
 var RTBkit = require('./../rtbkit/bin/rtb');
 var services_lib = require('./../rtbkit/bin/services');
-var budgetController = require('./budget-controller');
+var CampaignBudgetController = require('./budget-controller').CampaignBudgetController;
 
-/* ------------------ Parse initial configuration -------------- */
+//================================================================//
+//================ PARSE INITIAL CONFIGURATION ===================//
+//================================================================//
+
 var AgentConfig = require('./nodebidagent-config').AgentConfig;
 
 // First get configs from args on startup
@@ -13,11 +16,14 @@ var coreConfig = agentConfig.coreConfig;
 var targetingConfig = agentConfig.targetingConfig;
 var envConfig = agentConfig.envConfig;
 
-/* ------------------ RTBKit Vars & Services --------------------*/
+
+//================================================================//
+//================== RTBKIT VARS & SERVICES ======================//
+//================================================================//
 
 var zookeeperUri = envConfig["zookeeper-uri"], // must point to same Zookeeper as routers
     services = new services_lib.ServiceProxies(),
-    accountAdded = false,
+    //accountAdded = false,
     interval;
     
 // uri,install name and location from bootstrap.json
@@ -25,24 +31,21 @@ services.useZookeeper(zookeeperUri,"rtb-test", "mtl");
 // yes, we want to log to carbon
 services.logToCarbon(envConfig["carbon-uri"]);
 
-/* ----------------- Agent Init & Event Handlers ------------------ */
+
+//==================================================================//
+//================= INITIALIZE BUDGET CONTROLLER ===================//
+//==================================================================//
+
+var INTERVAL_IN_MS = 15000; //interval to set for pacer in milliseconds
+var budgetController = new CampaignBudgetController(coreConfig.account, INTERVAL_IN_MS);
+budgetController.configure_and_run(agentConfig);
+
+//================================================================//
+//================ AGENT INIT & EVENT HANDLERS ===================//
+//================================================================//
 
 var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
 // You can skip overriding some of these handlers by setting strictMode(false);
-
-//setup account namespacing
-var accountParent = coreConfig.account[0];
-var accountFullName = coreConfig.account.join(":");
-
-// add listener for config changes passed by controller
-process.stdin.resume();
-process.stdin.on('data', function(data){
-    agentConfig = AgentConfig.deserialize(data);
-    coreConfig = agentConfig.coreConfig;
-    targetingConfig = agentConfig.targetingConfig;
-    // send new config to core
-    agent.doConfig(coreConfig);
-});
 
 /**
  * Linearly modifies an original starting bid according to weights specified
@@ -265,17 +268,27 @@ agent.onPing = function(router,timesent,args){
   timereceived = null;
 };
 
-//agent.onImpression = function(timestamp, auctionId, spotId, spotIndex, bidRequest, bidMeta, winMeta, impressionMeta, clickMeta, augmentations, visits){
-//  console.log("IMPRESSION");
-//}
-//
-//agent.onVisit = function(timestamp, auctionId, spotId, spotIndex, bidRequest, bidMeta, winMeta, impressionMeta, clickMeta, augmentations, visits){
-//  console.log("VISIT");
-//}
-//
-//agent.onClick = function(timestamp, auctionId, spotId, spotIndex, bidRequest, bidMeta, winMeta, impressionMeta, clickMeta, augmentations, visits){
-//  console.log("CLICK");
-//}
+agent.init();
+agent.start();
+agent.doConfig(coreConfig);
+
+
+//=======================================================================//
+//=========== LISTENERS FOR MSGS/SIGNALS FROM PARENT PROCESS ============//
+//=======================================================================//
+
+// add listener for config changes passed by controller
+process.stdin.resume();
+process.stdin.on('data', function(data){
+    agentConfig = AgentConfig.deserialize(data);
+    coreConfig = agentConfig.coreConfig;
+    targetingConfig = agentConfig.targetingConfig;
+    // send new config to core
+    agent.doConfig(coreConfig);
+
+    // reconfigure budgetController and run
+    budgetController.configure_and_run(agentConfig);
+});
 
 // Handle kill signal sent by controller, shut down BidAgent
 // to clear its state
@@ -284,52 +297,3 @@ process.on('SIGUSR2', function(){
     console.log('bidAgent closed, now exiting process.');
     process.exit(0);
 });
-
-//-------------------------
-// END Agent Event Handlers
-//-------------------------
-
-//---------------------------------
-// Handlers for budget manipulation
-//---------------------------------
-
-var addAccountHandler = function(err, res){
-    if (err) {
-        console.log("Error adding account " + accountFullName);
-        //logger.error(err);
-        console.log(err);
-    }
-};
-
-var topupErrorHandler = function(err, res){
-    if (err) {
-        // TODO: Handle an error topping up the account.
-        console.log("Error topping up "+accountFullName);
-        // shutdown with an error
-        process.exit(1);
-    }
-};
-
-// Keep the budget for this subaccount topped up
-var pace = function(){
-    if (!accountAdded){
-        budgetController.addAccount(accountParent, addAccountHandler);
-        accountAdded = true;
-    }
-    // Transfer 10 cents every time we pace
-
-    // TODO: Add pacing logic here, transferring budget from parent
-    budgetController.topupTransferSync(accountFullName, "USD/1M", 100000, topupErrorHandler);
-};
-
-//-------------------------
-// Initialize agent
-//-------------------------
-
-agent.init();
-agent.start();
-
-agent.doConfig(coreConfig);
-// Start pacing the budget inflow for this bid agent
-pace();
-interval = setInterval(pace,10000);
