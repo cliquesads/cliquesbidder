@@ -86,7 +86,7 @@ CampaignBudgetController.prototype.configure_and_run = function(agentConfig){
     // chunks at a time.
     this._pace(function(err, child_account) {
         if (err) return console.log(err);
-        console.log('Pacing done, child account: ' + child_account);
+        console.log('Pacing done, child account: ' + JSON.stringify(child_account));
     });
 };
 
@@ -135,7 +135,7 @@ CampaignBudgetController.prototype._pace = function(callback){
     // sub-function that does the actual API call to transfer budget from parent to child
     function _transfer_budget(amount){
         self.apiClient.setChildAccountBalance(self.bidAgentAccount.accountName,self.currency,amount,function(err,child_account){
-            if (err){
+            if (err) {
                 return callback ? callback(err) : console.log(err);
             }
             return callback ? callback(null, child_account): null

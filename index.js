@@ -60,8 +60,12 @@ var mongo_connection = node_utils.mongodb.createConnectionWrapper(mongoURI, mong
 // TODO: technically if subscriber gets a message before the connection opens,
 // TODO: any reference to these models will fail.
 var advertiserModels;
+var controller;
 mongo_connection.once('open', function(callback){
     advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
+    /* -------------------- CONTROLLER INIT ---------------------- */
+    // Use redis to store list of campaigns for currently active
+    controller = new _Controller(redisClient);
 });
 
 /* -------------------- BIDAGENT CONFIGURATION -------------- */
@@ -329,11 +333,6 @@ _Controller.prototype.stopBidAgent = function(campaign_id){
     agent.kill('SIGUSR2');
     self._deleteBidAgent(campaign_id);
 };
-
-/* -------------------- CONTROLLER INIT ---------------------- */
-// Use redis to store list of campaigns for currently active
-var controller = new _Controller(redisClient);
-
 
 /* ---------------- BIDDER PUBSUB INSTANCE & LISTENERS ----------------- */
 
