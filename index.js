@@ -9,6 +9,7 @@ var BidAgentAccount = require('./bidding-agents/nodebidagent-config.js').BidAgen
 
 var config = require('config');
 var path = require('path');
+var pmx = require('pmx').init();
 var winston = require('winston');
 var util = require('util');
 var redis = require('redis');
