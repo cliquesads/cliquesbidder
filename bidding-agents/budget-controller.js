@@ -86,7 +86,7 @@ CampaignBudgetController.prototype.configure_and_run = function(agentConfig){
     // chunks at a time.
     this._pace(function(err, child_account) {
         if (err) return console.log(err);
-        console.log('Pacing done, child account: ' + JSON.stringify(child_account));
+        //console.log('Pacing done, child account: ' + JSON.stringify(child_account));
     });
 };
 
