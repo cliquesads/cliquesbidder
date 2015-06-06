@@ -1,6 +1,7 @@
 var node_utils = require('cliques_node_utils');
 var tags = node_utils.tags;
 var bigQueryUtils = node_utils.google.bigQueryUtils;
+var metadataServer = node_utils.google.metadataServer;
 var googleAuth = node_utils.google.auth;
 var logging = require('./lib/bidder_logging.js');
 var pubsub = node_utils.google.pubsub;
@@ -67,6 +68,13 @@ mongo_connection.once('open', function(callback){
     /* -------------------- CONTROLLER INIT ---------------------- */
     // Use redis to store list of campaigns for currently active
     controller = new _Controller(redisClient);
+});
+
+/* ---------------- BIDDER CLIQUE SET ON INSTANCE METADATA ----------------- */
+var client = new metadataServer.MetadataServerAPI();
+var CLIQUE;
+client.getInstanceMetadataVal('clique', function(err, res){
+    CLIQUE = res;
 });
 
 /* -------------------- BIDAGENT CONFIGURATION -------------- */
@@ -167,23 +175,19 @@ function _parseTargetingConfig(campaign){
  *
  * Calls three private parsers to get core, env & targeting configs.
  *
- * @param {String} campaign_id Mongo campaign.id
+ * @param {String} campaign Mongoose campaign object
  * @param callback takes (err, serialized_config, campaign_obj)
  */
-function getAgentConfig(campaign_id, callback){
+function getAgentConfig(campaign, callback){
     // get campaign object from DB first
-    advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign){
-        // create config objects to pass to bidagent
-        if (err) return callback(err);
 
-        // parse individual configs
-        var coreConfig = _parseCoreConfig(campaign);
-        var targetingConfig = _parseTargetingConfig(campaign);
-        var envConfig = _parseEnvConfig(BOOTSTRAP_FILE);
+    // parse individual configs
+    var coreConfig = _parseCoreConfig(campaign);
+    var targetingConfig = _parseTargetingConfig(campaign);
+    var envConfig = _parseEnvConfig(BOOTSTRAP_FILE);
 
-        var agentConfig = new AgentConfig(coreConfig, targetingConfig, envConfig);
-        return callback(null, agentConfig.serialize(), campaign);
-    });
+    var agentConfig = new AgentConfig(coreConfig, targetingConfig, envConfig);
+    return callback(null, agentConfig.serialize(), campaign);
 }
 exports.getAgentConfig = getAgentConfig;
 
@@ -249,11 +253,12 @@ _Controller.prototype._deleteBidAgent = function(campaign_id){
  * Spawns bidAgent child process and registers process with the
  * controller.
  *
- * @param campaign_id
+ * @param campaign
  */
-_Controller.prototype.createBidAgent = function(campaign_id){
+_Controller.prototype.createBidAgent = function(campaign){
     var self = this;
 
+    var campaign_id = campaign.id;
     // First check to make sure no other agent is running for this campaign already,
     // which would mean that this method has been called in error
     if (self._getBidAgent(campaign_id)){
@@ -266,7 +271,7 @@ _Controller.prototype.createBidAgent = function(campaign_id){
     }
 
     // wrap creation of bidAgent in call to DB to get config data
-    getAgentConfig(campaign_id, function(err, serialized_config, campaign) {
+    getAgentConfig(campaign, function(err, serialized_config, campaign) {
         // spawn child process, i.e. spin up new bidding agent
         var agent = child_process.spawn(self.BIDAGENT_EXECUTABLE, [serialized_config]);
         self._registerBidAgent(campaign_id, agent);
@@ -295,10 +300,11 @@ _Controller.prototype.createBidAgent = function(campaign_id){
 /**
  * Sends message to bidAgent child process with updated config data.
  *
- * @param campaign_id
+ * @param campaign
  */
-_Controller.prototype.updateBidAgent = function(campaign_id){
+_Controller.prototype.updateBidAgent = function(campaign){
     var self = this;
+    var campaign_id = campaign.id;
     var agent = self._getBidAgent(campaign_id);
     if (!agent){
         // TODO: Might want to throw a bigger hissy-fit if this happens rather than
@@ -309,7 +315,7 @@ _Controller.prototype.updateBidAgent = function(campaign_id){
         return;
     }
     // wrap updating of bidAgent in call to DB to get config data
-    getAgentConfig(campaign_id, function(err, serialized_config, campaign){
+    getAgentConfig(campaign, function(err, serialized_config, campaign){
         // send message to child process with new configs
         agent.stdin.write(serialized_config);
     });
@@ -318,10 +324,11 @@ _Controller.prototype.updateBidAgent = function(campaign_id){
 /**
  * Kills bidAgent child process.
  *
- * @param campaign_id
+ * @param campaign
  */
-_Controller.prototype.stopBidAgent = function(campaign_id){
+_Controller.prototype.stopBidAgent = function(campaign){
     var self = this;
+    var campaign_id = campaign.id;
     var agent = self._getBidAgent(campaign_id);
     if (!agent){
         // TODO: Might want to throw a bigger hissy-fit if this happens rather than
@@ -352,6 +359,24 @@ if (process.env.NODE_ENV == 'local-test'){
 }
 var bidderPubSub = new pubsub.BidderPubSub(pubsub_options);
 
+
+/**
+ * Helper function to handle execution of callback only if subscription message
+ * (campaign_id) belongs to clique matching the one configured for this bidder
+ *
+ * @param campaign_id
+ * @param callback
+ */
+function filterCampaignByClique(campaign_id, callback){
+    advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign){
+        if (err) return callback('Error when trying to get campaign_id ' + campaign_id + ' from MongoDB:' + err);
+        // filter on campaign clique, only spawn if clique matches this bidder's clique
+        if (campaign.clique.id === CLIQUE) {
+            return callback(null, campaign);
+        }
+    });
+}
+
 /**
  * Create bidder using controller on message from pubsub topic createBidder.
  *
@@ -363,8 +388,11 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
     // message listener
     subscription.on('message', function(message){
         var campaign_id = message.data;
-        logger.info('Received createBidder message for campaignId '+ campaign_id + ', spawning bidagent...');
-        controller.createBidAgent(campaign_id);
+        filterCampaignByClique(campaign_id, function(err, campaign){
+            if (err) throw new Error(err);
+            logger.info('Received createBidder message for campaignId ' + campaign_id + ', spawning bidagent...');
+            controller.createBidAgent(campaign);
+        });
     });
     subscription.on('error', function(err){
         logger.error(err);
@@ -375,11 +403,14 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
  * Handle updates to bidder config, received from updateBidder topic messages
  */
 bidderPubSub.subscriptions.updateBidder(function(err, subscription){
-    if (err) throw new Error('Error creating subscription to updateeBidder topic: ' + err);
+    if (err) throw new Error('Error creating subscription to updateBidder topic: ' + err);
     subscription.on('message', function(message){
         var campaign_id = message.data;
-        logger.info('Received updateBidder message for campaignId '+ campaign_id+ ', updating config...');
-        controller.updateBidAgent(campaign_id);
+        filterCampaignByClique(campaign_id, function(err, campaign) {
+            if (err) throw new Error(err);
+            logger.info('Received updateBidder message for campaignId ' + campaign_id + ', updating config...');
+            controller.updateBidAgent(campaign);
+        });
     });
     subscription.on('error', function(err){
         logger.error(err);
@@ -393,8 +424,10 @@ bidderPubSub.subscriptions.stopBidder(function(err, subscription){
     if (err) throw new Error('Error creating subscription to stopBidder topic: ' + err);
     subscription.on('message', function(message){
         var campaign_id = message.data;
-        logger.info('Received stopBidder message for campaignId '+ campaign_id + ', killing bidAgent now...');
-        controller.stopBidAgent(campaign_id);
+        filterCampaignByClique(campaign_id, function(err, campaign){
+            logger.info('Received stopBidder message for campaignId '+ campaign_id + ', killing bidAgent now...');
+            controller.stopBidAgent(campaign);
+        });
     });
     subscription.on('error', function(err){
         logger.error(err);
