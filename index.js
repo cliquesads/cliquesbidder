@@ -373,7 +373,8 @@ function filterCampaignByClique(campaign_id, callback){
     advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign){
         if (err) return callback('Error when trying to get campaign_id ' + campaign_id + ' from MongoDB:' + err);
         // filter on campaign clique, only spawn if clique matches this bidder's clique
-        if (campaign.clique.id === CLIQUE) {
+        //logger.info('Message received for campaign_id ' + campaign_id + ', in clique ' + campaign.clique.id);
+        if (campaign.clique === CLIQUE) {
             return callback(null, campaign);
         }
     });
