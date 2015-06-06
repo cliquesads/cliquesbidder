@@ -74,7 +74,9 @@ mongo_connection.once('open', function(callback){
 var client = new metadataServer.MetadataServerAPI();
 var CLIQUE;
 client.getInstanceMetadataVal('clique', function(err, res){
+    if (err) return logger.error(err);
     CLIQUE = res;
+    logger.info('Bidder clique = ' + CLIQUE);
 });
 
 /* -------------------- BIDAGENT CONFIGURATION -------------- */
