@@ -227,7 +227,10 @@ var _Controller = function(redisClient){
         if (err) throw new Error('Error retrieving campaigns from redis: ' + err);
         if (campaigns.length > 0){
             campaigns.forEach(function(campaign_id){
-                self.createBidAgent(campaign_id);
+                advertiserModels.getNestedObjectById(campaign_id, 'Campaign', function(err, campaign) {
+                    if (err) throw new Error(err);
+                    self.createBidAgent(campaign);
+                });
             });
         }
     });
@@ -259,7 +262,6 @@ _Controller.prototype._deleteBidAgent = function(campaign_id){
  */
 _Controller.prototype.createBidAgent = function(campaign){
     var self = this;
-
     var campaign_id = campaign.id;
     // First check to make sure no other agent is running for this campaign already,
     // which would mean that this method has been called in error
