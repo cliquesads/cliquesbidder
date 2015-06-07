@@ -28,7 +28,7 @@ source rtbkit-*.sh
 
 # Start PostGreSQL for graphite monitoring
 if ! pgrep postgres > /dev/null; then
-    /etc/init.d/postgresql start
+    sudo /etc/init.d/postgresql start
 else
     echo "Postgres is already running, skipping..."
 fi
