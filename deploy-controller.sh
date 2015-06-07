@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 #activate production environment
 source ./activate_production.sh
 
