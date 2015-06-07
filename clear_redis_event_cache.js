@@ -10,7 +10,7 @@ var googleAuth = node_utils.google.auth;
 var bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config.json');
 var eventStreamer = new bigQueryUtils.BigQueryEventStreamer(bq_config,
     googleAuth.DEFAULT_JWT_SECRETS_FILE,5);
-var redisEventCache = new transports.RedisEventCache({ eventStreamer: eventStreamer});
+var redisEventCache = new transports.RedisEventCache({ eventStreamer: eventStreamer, redis_port: 6380 });
 redisEventCache.clearZombieEventCaches(function(err){
     if (err) return console.error(err);
     process.exit(0);
