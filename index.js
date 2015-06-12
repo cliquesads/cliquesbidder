@@ -30,8 +30,9 @@ var logfile = path.join(
     util.format('bidagent_%s.log',node_utils.dates.isoFormatUTCNow())
 );
 var bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config.json');
+var chunkSize = config.get('Bidder.redis_event_cache.chunkSize');
 var eventStreamer = new bigQueryUtils.BigQueryEventStreamer(bq_config,
-    googleAuth.DEFAULT_JWT_SECRETS_FILE,20);
+    googleAuth.DEFAULT_JWT_SECRETS_FILE,chunkSize);
 logger = new logging.BidderCLogger({
     transports: [
         new (winston.transports.Console)({timestamp:true}),
