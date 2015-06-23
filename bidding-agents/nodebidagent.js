@@ -118,7 +118,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         var meta = {
             uuid: bidRequest.user.id,
             auctionId: auctionId,
-            bidid: [auctionId, impid].join(':'),
+            //bidid: [auctionId, impid].join(':'),
             impid: impid,
             bid: bid,
             placement: spot.tagid,
