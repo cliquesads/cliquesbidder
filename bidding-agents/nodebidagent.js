@@ -59,18 +59,22 @@ var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
  * @param modifiers
  */
 function modifyBid(bid, requestValue, modifiers){
-    // first filter modifiers to see if
-    var filtered = modifiers.filter(function(obj){
-        return obj._id == requestValue;
-    });
-    //console.log("Filtered targeting objects: " + JSON.stringify(filtered, null,2));
-    if (filtered.length == 1){
-        return bid * filtered[0].weight;
-    } else if (filtered.length == 0){
-        return bid;
+    if (modifiers){
+        // first filter modifiers to see if
+        var filtered = modifiers.filter(function(obj){
+            return obj._id == requestValue;
+        });
+        //console.log("Filtered targeting objects: " + JSON.stringify(filtered, null,2));
+        if (filtered.length == 1){
+            return bid * filtered[0].weight;
+        } else if (filtered.length == 0){
+            return bid;
+        } else {
+            console.log("ERROR: multiple matching criteria found in modifiers: "
+            + JSON.stringify(filtered));
+        }
     } else {
-        console.log("ERROR: multiple matching criteria found in modifiers: "
-        + JSON.stringify(filtered));
+        return bid;
     }
 }
 
