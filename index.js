@@ -401,6 +401,7 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
         });
     });
     subscription.on('error', function(err){
+        logger.error('Error subscribing to CreateBidder topic, will not be able to receive signals until this is fixed');
         logger.error(err);
     });
 });
@@ -419,6 +420,7 @@ bidderPubSub.subscriptions.updateBidder(function(err, subscription){
         });
     });
     subscription.on('error', function(err){
+        logger.error('Error subscribing to UpdateBidder topic, will not be able to receive signals until this is fixed');
         logger.error(err);
     });
 });
@@ -436,6 +438,7 @@ bidderPubSub.subscriptions.stopBidder(function(err, subscription){
         });
     });
     subscription.on('error', function(err){
+        logger.error('Error subscribing to StopBidder topic, will not be able to receive signals until this is fixed');
         logger.error(err);
     });
 });
