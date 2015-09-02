@@ -287,9 +287,16 @@ _Controller.prototype.createBidAgent = function(campaign){
             // hacky, I know.
             // log using bid method if logline begins with 'BID: '
             if (logline.indexOf(logging.BID_PREFIX) === 0) {
-                var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
-                // call logger method, pass campaign and advertiser in.
-                logger.bid(meta, campaign, campaign.parent_advertiser);
+                try {
+                    //TODO: have to wrap in try catch as this throws weird
+                    //TODO: parsing bugs once in a while, figure out root cause
+                    var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
+                    // call logger method, pass campaign and advertiser in.
+                    logger.bid(meta, campaign, campaign.parent_advertiser);
+                } catch (e if e instanceof SyntaxError) {
+                    logger.error("ERROR parsing bid logline -- tried to parse the following:");
+                    logger.info(logline);
+                }
             } else {
                 logger.info(data.toString());
             }
