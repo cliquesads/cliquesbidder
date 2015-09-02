@@ -293,7 +293,7 @@ _Controller.prototype.createBidAgent = function(campaign){
                     var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
                     // call logger method, pass campaign and advertiser in.
                     logger.bid(meta, campaign, campaign.parent_advertiser);
-                } catch (e if e instanceof SyntaxError) {
+                } catch (e) {
                     logger.error("ERROR parsing bid logline -- tried to parse the following:");
                     logger.info(logline);
                 }
