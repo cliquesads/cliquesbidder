@@ -138,6 +138,7 @@ CampaignBudgetController.prototype._pace = function(callback){
             if (err) {
                 return callback ? callback(err) : console.log(err);
             }
+            console.log('Child account balance transferred');
             return callback ? callback(null, child_account): null
         });
     }
