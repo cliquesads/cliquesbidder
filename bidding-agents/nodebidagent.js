@@ -62,7 +62,7 @@ function modifyBid(bid, requestValue, modifiers){
     if (modifiers){
         // first filter modifiers to see if
         var filtered = modifiers.filter(function(obj){
-            return obj.target == requestValue;
+            return obj.target.toString() == requestValue;
         });
         //console.log("Filtered targeting objects: " + JSON.stringify(filtered, null,2));
         if (filtered.length == 1){
@@ -101,10 +101,9 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         // Linearly modify bid, starting with base bid
         var bid = targetingConfig.base_bid;
         //console.log('Basebid: ' + bid);
-        console.log(bidRequest);
         bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
-        bid = modifyBid(bid, bidRequest.location.metro, targetingConfig.dma_targets);
-        bid = modifyBid(bid, bidRequest.location.countryCode, targetingConfig.country_targets);
+        bid = modifyBid(bid, bidRequest.device.geo.metro, targetingConfig.dma_targets);
+        bid = modifyBid(bid, bidRequest.device.geo.country, targetingConfig.country_targets);
         //console.log('Bid after modifications' + bid);
         // cap at maxbid
         bid = Math.min(bid, targetingConfig.max_bid);
