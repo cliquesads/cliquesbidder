@@ -62,6 +62,9 @@ function modifyBid(bid, requestValue, modifiers){
     if (modifiers){
         // first filter modifiers to see if
         var filtered = modifiers.filter(function(obj){
+            console.log(obj._id);
+            console.log(requestValue);
+            console.log(obj._id === requestValue);
             return obj._id.toString() == requestValue;
         });
         //console.log("Filtered targeting objects: " + JSON.stringify(filtered, null,2));
