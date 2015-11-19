@@ -141,6 +141,8 @@ function _parseCoreConfig(campaign, options){
         creatives: []
     };
     // push creatives into config
+    // get domain name, may be entered as website.  Convert to base domain for OpenRTB compatibility.
+    var adomain = [campaign.parent_advertiser.website.split('.').slice(-2).join('.')];
     for (var i=0; i < campaign.creativegroups.length; i++){
         var crg = campaign.creativegroups[i];
         coreConfig.creatives.push({
@@ -151,7 +153,7 @@ function _parseCoreConfig(campaign, options){
             providerConfig: {
                 cliques: {
                     adm: tag.render(crg),
-                    adomain: [campaign.parent_advertiser.website]
+                    adomain: adomain
                 }
             }
         });
