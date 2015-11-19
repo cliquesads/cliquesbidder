@@ -113,6 +113,8 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         // "creatives" here are really creative groups, and there should only
         // be one creative group per size per campaign
         var creativeIndex = bids[i].availableCreatives[0];
+        console.log(JSON.stringify(coreConfig.creatives[creativeIndex]));
+        console.log(JSON.stringify(bidRequest.restrictions));
 
         // assume imp indexing is identical to spot indexing?
         var impid = bidRequest.imp[i].id;
