@@ -102,14 +102,15 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     // be one creative group per size per campaign
     var creativeIndex = bids[0].availableCreatives[0];
     var creativeConfig = coreConfig.creatives[creativeIndex];
-    var badv = bidRequest.restrictions.badv;
+
+    // badv is not actually an array but an array-like object, so have to convert it
+    var badv = Array.prototype.slice.call(bidRequest.restrictions.badv);
+
     // TODO: Filters for bids that really should be proper Filter components
-    //if (badv){
-    //    if (badv.indexOf(creativeConfig.providerConfig.cliques.adomain[0]) > -1) {
-    //        return;
-    //    }
-    //}
-    console.log(Array.prototype.slice.call(badv) instanceof Array);
+    if (badv.indexOf(creativeConfig.providerConfig.cliques.adomain[0]) > -1) {
+        return;
+    }
+
     // Linearly modify bid, starting with base bid
     var bid = targetingConfig.base_bid;
     bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
