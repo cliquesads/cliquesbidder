@@ -95,7 +95,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     // But keeping this in here for future use in case this changes.
     //for (var i=0; i<bids.length; i++){
 
-    console.log(JSON.stringify(bidRequest, null, 2));
+    //console.log(JSON.stringify(bidRequest, null, 2));
 
     var spot = bidRequest.spots[0];
     var placementId = spot.tagid;
@@ -115,10 +115,11 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         return;
     }
     //Assume only one clique per page, even though OpenRTB allows for multiple IAB Categories
-    var page_clique = Array.prototype.slice.call(bidRequest.site.pagecat)[0];
-    if (targetingConfig.blocked_cliques.indexOf(page_clique) > -1){
-        return;
-    }
+    //var page_clique = Array.prototype.slice.call(bidRequest.site.pagecat)[0];
+    //if (targetingConfig.blocked_cliques.indexOf(page_clique) > -1){
+    //    return;
+    //}
+    console.log(JSON.stringify(bidRequest.site, null, 2));
 
     //================================================================//
     //===================== BEGIN BID MODIFIERS ======================//
