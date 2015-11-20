@@ -109,7 +109,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     //        return;
     //    }
     //}
-    console.log(typeof badv);
+    console.log(Array.prototype.slice.call(badv) instanceof Array);
     // Linearly modify bid, starting with base bid
     var bid = targetingConfig.base_bid;
     bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
