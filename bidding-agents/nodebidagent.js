@@ -93,31 +93,27 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     // Currently, there are not, Cliques Exchange is set up to send one "spot"
     // (i.e. placement) per bid request, so this is a bit unnecessary.
     // But keeping this in here for future use in case this changes.
-    for (var i=0; i<bids.length; i++){
+    //for (var i=0; i<bids.length; i++){
 
-        var spot = bidRequest.spots[i];
-        var placementId = spot.tagid;
+    var spot = bidRequest.spots[0];
+    var placementId = spot.tagid;
+    // Take first creative from list of avail creatives, since
+    // "creatives" here are really creative groups, and there should only
+    // be one creative group per size per campaign
+    var creativeIndex = bids[0].availableCreatives[0];
+    var creativeConfig = coreConfig.creatives[creativeIndex];
 
+    // TODO: Filters for bids that really should be proper Filter components
+    if (bidRequest.restrictions.badv.indexOf(creativeConfig.providerConfig.adomain[0]) === -1){
         // Linearly modify bid, starting with base bid
         var bid = targetingConfig.base_bid;
-        //console.log('Basebid: ' + bid);
         bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
         bid = modifyBid(bid, bidRequest.device.geo.metro, targetingConfig.dma_targets);
         bid = modifyBid(bid, bidRequest.device.geo.country, targetingConfig.country_targets);
-        //console.log('Bid after modifications' + bid);
-        // cap at maxbid
         bid = Math.min(bid, targetingConfig.max_bid);
-        //console.log('Bid after capping:' + bid);
-
-        // Take first creative from list of avail creatives, since
-        // "creatives" here are really creative groups, and there should only
-        // be one creative group per size per campaign
-        var creativeIndex = bids[i].availableCreatives[0];
-        console.log(JSON.stringify(coreConfig.creatives[creativeIndex]));
-        console.log(JSON.stringify(bidRequest.restrictions));
 
         // assume imp indexing is identical to spot indexing?
-        var impid = bidRequest.imp[i].id;
+        var impid = bidRequest.imp[0].id;
 
         // Handle logging to parent here real quick
         // have to do most of the hardwork for logging here
@@ -128,7 +124,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
             impid: impid,
             bid: bid,
             placement: spot.tagid,
-            creative_group: coreConfig.creatives[creativeIndex].tagId
+            creative_group: creativeConfig.tagId
         };
         // this is super hacky and I don't like it, but it works. Im sorry.
         console.log('BID ' + JSON.stringify(meta));
@@ -144,10 +140,11 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         // bids object which has been validated using the "bid" call.
         // The explanation for the C++ analog of this method is here:
         // https://github.com/rtbkit/rtbkit/wiki/How-to-write-a-bidding-agent
-        bids.bid(i,creativeIndex, amount, priority); // spotId, creativeIndex, price, priority
+        bids.bid(0,creativeIndex, amount, priority); // spotId, creativeIndex, price, priority
+        //}
+        agent.doBid(auctionId, bids, {}, wcm); // auction id, collection of bids, meta, win cost model.
+        amount = null;
     }
-    agent.doBid(auctionId, bids, {}, wcm); // auction id, collection of bids, meta, win cost model.
-    amount = null;
 };
 
 agent.onError = function(timestamp, description, message){
