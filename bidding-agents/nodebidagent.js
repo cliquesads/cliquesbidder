@@ -95,6 +95,8 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     // But keeping this in here for future use in case this changes.
     //for (var i=0; i<bids.length; i++){
 
+    console.log(JSON.stringify(bidRequest));
+
     var spot = bidRequest.spots[0];
     var placementId = spot.tagid;
     // Take first creative from list of avail creatives, since
