@@ -171,7 +171,8 @@ function _parseTargetingConfig(campaign){
         start_date: campaign.start_date,
         end_date: campaign.end_date,
         even_pacing: campaign.even_pacing,
-        budget: campaign.budget
+        budget: campaign.budget,
+        blocked_cliques: campaign.blocked_cliques
     };
 }
 

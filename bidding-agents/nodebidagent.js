@@ -105,20 +105,35 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     var creativeIndex = bids[0].availableCreatives[0];
     var creativeConfig = coreConfig.creatives[creativeIndex];
 
+    //================================================================//
+    //===================== BEGIN JANKY FILTERS ======================//
+    //================================================================//
     // badv is not actually an array but an array-like object, so have to convert it
     var badv = Array.prototype.slice.call(bidRequest.restrictions.badv);
-
     // TODO: Filters for bids that really should be proper Filter components
     if (badv.indexOf(creativeConfig.providerConfig.cliques.adomain[0]) > -1) {
         return;
     }
+    // Assume only one clique per page, even though OpenRTB allows for multiple IAB Categories
+    var page_clique = Array.prototype.slice.call(bidRequest.site.pagecat)[0];
+    if (targetingConfig.blocked_cliques.indexOf(page_clique) > -1){
+        return;
+    }
 
+    //================================================================//
+    //===================== BEGIN BID MODIFIERS ======================//
+    //================================================================//
     // Linearly modify bid, starting with base bid
     var bid = targetingConfig.base_bid;
     bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
     bid = modifyBid(bid, bidRequest.device.geo.metro, targetingConfig.dma_targets);
     bid = modifyBid(bid, bidRequest.device.geo.country, targetingConfig.country_targets);
     bid = Math.min(bid, targetingConfig.max_bid);
+
+
+    //================================================================//
+    //====================== LOGGING & PARSING =======================//
+    //================================================================//
 
     // assume imp indexing is identical to spot indexing?
     var impid = bidRequest.imp[0].id;
@@ -136,6 +151,10 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     };
     // this is super hacky and I don't like it, but it works. Im sorry.
     console.log('BID ' + JSON.stringify(meta));
+
+    //================================================================//
+    //============================ DO BID ============================//
+    //================================================================//
 
     // convert to RTBKit currency object
     var amount = new RTBkit.USD_CPM(bid);
