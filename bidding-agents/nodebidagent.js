@@ -119,7 +119,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     //if (targetingConfig.blocked_cliques.indexOf(page_clique) > -1){
     //    return;
     //}
-    console.log(JSON.stringify(bidRequest.site, null, 2));
+    console.log(JSON.stringify(bidRequest.segments["page-iab-categories"], null, 2));
 
     //================================================================//
     //===================== BEGIN BID MODIFIERS ======================//
