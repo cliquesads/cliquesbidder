@@ -104,11 +104,12 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     var creativeConfig = coreConfig.creatives[creativeIndex];
     var badv = bidRequest.restrictions.badv;
     // TODO: Filters for bids that really should be proper Filter components
-    if (badv){
-        if (badv.indexOf(creativeConfig.providerConfig.cliques.adomain[0]) > -1) {
-            return;
-        }
-    }
+    //if (badv){
+    //    if (badv.indexOf(creativeConfig.providerConfig.cliques.adomain[0]) > -1) {
+    //        return;
+    //    }
+    //}
+    console.log(badv);
     // Linearly modify bid, starting with base bid
     var bid = targetingConfig.base_bid;
     bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
