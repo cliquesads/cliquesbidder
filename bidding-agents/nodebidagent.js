@@ -115,11 +115,10 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         return;
     }
     //Assume only one clique per page, even though OpenRTB allows for multiple IAB Categories
-    //var page_clique = Array.prototype.slice.call(bidRequest.site.pagecat)[0];
-    //if (targetingConfig.blocked_cliques.indexOf(page_clique) > -1){
-    //    return;
-    //}
-    console.log(JSON.stringify(bidRequest.segments["page-iab-categories"], null, 2));
+    var page_clique = Array.prototype.slice.call(bidRequest.segments["page-iab-categories"])[0];
+    if (targetingConfig.blocked_cliques.indexOf(page_clique) > -1){
+        return;
+    }
 
     //================================================================//
     //===================== BEGIN BID MODIFIERS ======================//
