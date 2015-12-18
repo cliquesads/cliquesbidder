@@ -99,7 +99,8 @@ CampaignBudgetController.prototype.configure_and_run = function(agentConfig){
  * @param {Number} budget budget in simple USD or external currency
  */
 CampaignBudgetController.convertBudget = function(budget){
-    return budget * 1e6;
+    // TODO: Arbitrarily increase budgets by 30% right now to pace evenly, not sure why they're all slow but they are
+    return budget * 1e6 * 1.3;
 };
 
 /**
