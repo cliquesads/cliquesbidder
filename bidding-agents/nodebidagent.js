@@ -132,7 +132,6 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
 
     // Don't bid if bid is zero
     if (bid === 0){
-        console.log("Bid of 0 Received -- Blocking bid from happening!");
         return;
     }
 
