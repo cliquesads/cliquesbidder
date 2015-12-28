@@ -100,5 +100,6 @@ AgentConfig.deserialize = function(serialized_config){
             conf.helpers[name] = deserializeFunction(conf.helpers[name]);
         }
     }
+    console.log(conf.helpers);
     return new AgentConfig(conf.coreConfig, conf.targetingConfig, conf.envConfig, conf.helpers)
 };
