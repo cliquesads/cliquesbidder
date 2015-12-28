@@ -16,6 +16,7 @@ var coreConfig = agentConfig.coreConfig;
 var targetingConfig = agentConfig.targetingConfig;
 var envConfig = agentConfig.envConfig;
 var configHelpers = agentConfig.helpers;
+console.log(agentConfig.helpers);
 
 
 //================================================================//
