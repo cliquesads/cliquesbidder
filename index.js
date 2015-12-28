@@ -168,12 +168,27 @@ function _parseTargetingConfig(campaign){
         country_targets: campaign.country_targets,
         dma_targets: campaign.dma_targets,
         placement_targets: campaign.placement_targets,
+        inventory_targets: campaign.inventory_targets,
         start_date: campaign.start_date,
         end_date: campaign.end_date,
         even_pacing: campaign.even_pacing,
         budget: campaign.budget,
         blocked_cliques: campaign.blocked_cliques
     };
+}
+
+/**
+ * Primitive but effective way to pass functions to AgentConfig for use by nodebidagent
+ * More of a placeholder for now, but can be used in the future to pass arbitrary helper
+ * functions to AgentConfig object for serialization & deserialization in nodebidagent.
+ *
+ * @returns {{getInventoryWeight: *}}
+ * @private
+ */
+function _getHelperFunctions(){
+    return {
+        getInventoryWeight: advertiserModels.Campaign.getInventoryWeight
+    }
 }
 
 /**
@@ -191,8 +206,9 @@ function getAgentConfig(campaign, callback){
     var coreConfig = _parseCoreConfig(campaign);
     var targetingConfig = _parseTargetingConfig(campaign);
     var envConfig = _parseEnvConfig(BOOTSTRAP_FILE);
+    var helpers = _getHelperFunctions();
 
-    var agentConfig = new AgentConfig(coreConfig, targetingConfig, envConfig);
+    var agentConfig = new AgentConfig(coreConfig, targetingConfig, envConfig, helpers);
     return callback(null, agentConfig.serialize(), campaign);
 }
 exports.getAgentConfig = getAgentConfig;

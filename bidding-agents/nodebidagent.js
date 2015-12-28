@@ -15,6 +15,7 @@ var agentConfig = AgentConfig.deserialize(process.argv[2]);
 var coreConfig = agentConfig.coreConfig;
 var targetingConfig = agentConfig.targetingConfig;
 var envConfig = agentConfig.envConfig;
+var configHelpers = agentConfig.helpers;
 
 
 //================================================================//
