@@ -97,8 +97,9 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     //for (var i=0; i<bids.length; i++){
 
     //console.log(JSON.stringify(Object.getOwnPropertyNames(bidRequest), null, 2));
-    console.log(JSON.stringify(bidRequest.imp, null, 2));
-    console.log(JSON.stringify(bidRequest.meta, null, 2));
+    //console.log(JSON.stringify(bidRequest.imp, null, 2));
+    //console.log(JSON.stringify(bidRequest.meta, null, 2));
+    console.log('site' in bidRequest);
 
     var spot = bidRequest.spots[0];
     var placementId = spot.tagid;
