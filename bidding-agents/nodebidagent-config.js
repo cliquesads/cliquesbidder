@@ -74,6 +74,7 @@ AgentConfig.prototype.serialize = function(){
             }
         }
     }
+    console.log(helpers);
     return JSON.stringify({
         envConfig: this.envConfig,
         targetingConfig: this.targetingConfig,
