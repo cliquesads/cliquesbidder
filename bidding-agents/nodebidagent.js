@@ -96,7 +96,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     // But keeping this in here for future use in case this changes.
     //for (var i=0; i<bids.length; i++){
 
-    console.log(JSON.stringify(bidRequest, null, 2));
+    //console.log(JSON.stringify(bidRequest, null, 2));
 
     var spot = bidRequest.spots[0];
     var placementId = spot.tagid;
@@ -126,6 +126,9 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     //================================================================//
     // Linearly modify bid, starting with base bid
     var bid = targetingConfig.base_bid;
+    var branch = Array.prototype.slice.call(bidRequest.site.ext.branch);
+    var inventoryWeight = configHelpers.getInventoryWeight(branch, targetingConfig.inventory_targets);
+    bid = inventoryWeight * bid;
     bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
     bid = modifyBid(bid, bidRequest.device.geo.metro, targetingConfig.dma_targets);
     bid = modifyBid(bid, bidRequest.device.geo.country, targetingConfig.country_targets);
