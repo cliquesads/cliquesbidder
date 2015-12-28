@@ -74,7 +74,7 @@ AgentConfig.prototype.serialize = function(){
             }
         }
     }
-    console.log(helpers);
+    //console.log(helpers);
     return JSON.stringify({
         envConfig: this.envConfig,
         targetingConfig: this.targetingConfig,
@@ -94,6 +94,7 @@ AgentConfig.prototype.serialize = function(){
 AgentConfig.deserialize = function(serialized_config){
     var conf = JSON.parse(serialized_config);
     // deserialize each function in helpers
+    console.log(conf.helpers);
     for (var name in conf.helpers){
         if (conf.helpers.hasOwnProperty(name)){
             conf.helpers[name] = deserializeFunction(conf.helpers[name]);
