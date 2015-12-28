@@ -69,9 +69,9 @@ AgentConfig.prototype.serialize = function(){
         if (this.helpers.hasOwnProperty(name)){
             // final check to make sure it's a function,
             // otherwise just skip it
-            if (typeof this.helpers === 'function'){
+            //if (typeof this.helpers === 'function'){
                 helpers[name] = this.helpers.toString();
-            }
+            //}
         }
     }
     return JSON.stringify({
