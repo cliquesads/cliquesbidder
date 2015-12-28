@@ -95,17 +95,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     // (i.e. placement) per bid request, so this is a bit unnecessary.
     // But keeping this in here for future use in case this changes.
     //for (var i=0; i<bids.length; i++){
-
-    var properties = Object.getOwnPropertyNames(bidRequest);
-    properties.forEach(function(prop){
-        console.log(prop + ' ::: ' );
-        console.log(JSON.stringify(bidRequest[prop],null,2));
-    });
-    //console.log(JSON.stringify(Object.getOwnPropertyNames(bidRequest), null, 2));
-
-    //console.log(JSON.stringify(bidRequest.imp, null, 2));
-    //console.log(JSON.stringify(bidRequest.meta, null, 2));
-    //console.log('site' in bidRequest);
+    //console.log(JSON.stringify(bidRequest. null, 2));
 
     var spot = bidRequest.spots[0];
     var placementId = spot.tagid;
@@ -135,9 +125,10 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     //================================================================//
     // Linearly modify bid, starting with base bid
     var bid = targetingConfig.base_bid;
-    //var branch = Array.prototype.slice.call(bidRequest.site.ext.branch);
-    //var inventoryWeight = configHelpers.getInventoryWeight(branch, targetingConfig.inventory_targets);
-    //bid = inventoryWeight * bid;
+    var branch = Array.prototype.slice.call(bidRequest.imp[0].ext.branch);
+    var inventoryWeight = configHelpers.getInventoryWeight(branch, targetingConfig.inventory_targets);
+    console.log(inventoryWeight);
+    bid = inventoryWeight * bid;
     bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
     bid = modifyBid(bid, bidRequest.device.geo.metro, targetingConfig.dma_targets);
     bid = modifyBid(bid, bidRequest.device.geo.country, targetingConfig.country_targets);
