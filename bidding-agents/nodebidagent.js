@@ -126,9 +126,10 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     // Linearly modify bid, starting with base bid
     var bid = targetingConfig.base_bid;
     var branch = Array.prototype.slice.call(bidRequest.imp[0].ext.branch);
-    var inventoryWeight = configHelpers.getInventoryWeight(branch, targetingConfig.inventory_targets);
-    console.log(inventoryWeight);
-    bid = inventoryWeight * bid;
+    //var inventoryWeight = configHelpers.getInventoryWeight(branch, targetingConfig.inventory_targets);
+    //console.log(inventoryWeight);
+    console.log(JSON.stringify(configHelpers));
+    //bid = inventoryWeight * bid;
     bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
     bid = modifyBid(bid, bidRequest.device.geo.metro, targetingConfig.dma_targets);
     bid = modifyBid(bid, bidRequest.device.geo.country, targetingConfig.country_targets);
