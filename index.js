@@ -169,6 +169,7 @@ function _parseTargetingConfig(campaign){
         dma_targets: campaign.dma_targets,
         placement_targets: campaign.placement_targets,
         inventory_targets: campaign.inventory_targets,
+        blocked_inventory: campaign.blocked_inventory,
         start_date: campaign.start_date,
         end_date: campaign.end_date,
         even_pacing: campaign.even_pacing,
@@ -187,7 +188,8 @@ function _parseTargetingConfig(campaign){
  */
 function _getHelperFunctions(){
     return {
-        getInventoryWeight: advertiserModels.Campaign.getInventoryWeight
+        getInventoryWeight: advertiserModels.Campaign.getInventoryWeight,
+        getInventoryBlockStatus: advertiserModels.Campaign.getInventoryBlockStatus
     }
 }
 

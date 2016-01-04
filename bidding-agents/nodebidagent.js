@@ -114,9 +114,16 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     if (badv.indexOf(creativeConfig.providerConfig.cliques.adomain[0]) > -1) {
         return;
     }
+    //TODO: TO BE DEPRECATED
     //Assume only one clique per page, even though OpenRTB allows for multiple IAB Categories
     var page_clique = Array.prototype.slice.call(bidRequest.segments["page-iab-categories"])[0];
     if (targetingConfig.blocked_cliques.indexOf(page_clique) > -1){
+        return;
+    }
+    var branch = Array.prototype.slice.call(bidRequest.imp[0].ext.branch);
+    var isBlocked = configHelpers["getInventoryBlockStatus"](branch, targetingConfig.blocked_inventory);
+    if (isBlocked){
+        console.log('Branch blocked, dropping bid!');
         return;
     }
 
@@ -125,9 +132,9 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     //================================================================//
     // Linearly modify bid, starting with base bid
     var bid = targetingConfig.base_bid;
-    var branch = Array.prototype.slice.call(bidRequest.imp[0].ext.branch);
     var inventoryWeight = configHelpers["getInventoryWeight"](branch, targetingConfig.inventory_targets);
     bid = inventoryWeight * bid;
+    //TODO: TO BE DEPRECATED
     bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
     bid = modifyBid(bid, bidRequest.device.geo.metro, targetingConfig.dma_targets);
     bid = modifyBid(bid, bidRequest.device.geo.country, targetingConfig.country_targets);
