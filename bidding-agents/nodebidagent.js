@@ -98,7 +98,6 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     //console.log(JSON.stringify(bidRequest. null, 2));
 
     var spot = bidRequest.spots[0];
-    var placementId = spot.tagid;
     // Take first creative from list of avail creatives, since
     // "creatives" here are really creative groups, and there should only
     // be one creative group per size per campaign
@@ -114,16 +113,10 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     if (badv.indexOf(creativeConfig.providerConfig.cliques.adomain[0]) > -1) {
         return;
     }
-    //TODO: TO BE DEPRECATED
-    //Assume only one clique per page, even though OpenRTB allows for multiple IAB Categories
-    var page_clique = Array.prototype.slice.call(bidRequest.segments["page-iab-categories"])[0];
-    if (targetingConfig.blocked_cliques.indexOf(page_clique) > -1){
-        return;
-    }
+
     var branch = Array.prototype.slice.call(bidRequest.imp[0].ext.branch);
     var isBlocked = configHelpers["getInventoryBlockStatus"](branch, targetingConfig.blocked_inventory);
     if (isBlocked){
-        console.log('Branch blocked, dropping bid!');
         return;
     }
 
@@ -134,8 +127,6 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     var bid = targetingConfig.base_bid;
     var inventoryWeight = configHelpers["getInventoryWeight"](branch, targetingConfig.inventory_targets);
     bid = inventoryWeight * bid;
-    //TODO: TO BE DEPRECATED
-    bid = modifyBid(bid, placementId, targetingConfig.placement_targets);
     bid = modifyBid(bid, bidRequest.device.geo.metro, targetingConfig.dma_targets);
     bid = modifyBid(bid, bidRequest.device.geo.country, targetingConfig.country_targets);
     bid = Math.min(bid, targetingConfig.max_bid);
