@@ -1,7 +1,54 @@
 #!/bin/bash
 
-#activate production environment
-source ./activate_production.sh
+# usage text visible when --help flag passed in
+usage="$(basename "$0") -- deploy the Cliques bidAgent controller, all necessary bidAgents & RTBKit Core, if not already running.
+
+where:
+    --help  show this help text
+    -e arg (='production') environment flag - either 'dev' or 'production'.  Defaults to production"
+
+# BEGIN environment parsing
+env="production"
+
+if [ ! -z $1 ]; then
+  if [ $1 == '--help' ]; then
+    echo "$usage"
+    exit 0
+  fi
+fi
+
+# fucking getopts
+while getopts ":e:" opt; do
+  case $opt in
+    e)
+      if [ "$OPTARG" != 'production' ] && [ "$OPTARG" != 'dev' ]; then
+        echo "Invalid environment: $OPTARG.  Environment must be either 'dev' or 'production'"
+        exit 1
+      else
+        env="$OPTARG"
+      fi
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      echo "$usage"
+      exit 1
+      ;;
+    :)
+      echo "Environment flag -$OPTARG requires an argument (either 'dev' or 'production')" >&2
+      exit 1
+      ;;
+  esac
+done
+# END environment parsing
+
+# Set proper environment variables now that env is set
+if [ "$env" == "production" ]; then
+    source ./activate_production.sh
+    processname='bidAgentController'
+else
+    source ./activate_dev.sh
+    processname='bidAgentController_dev'
+fi
 
 #install all NPM dependencies
 npm install
