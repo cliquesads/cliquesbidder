@@ -29,7 +29,12 @@ var logfile = path.join(
     'nodebidagent',
     util.format('bidagent_%s.log',node_utils.dates.isoFormatUTCNow())
 );
-var bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config.json');
+if (process.env.NODE_ENV === 'production'){
+    var bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config.json');
+} else {
+    // use dev config if not running in production
+    bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config_dev.json','/google/bq_config_dev.json');
+}
 var chunkSize = config.get('Bidder.redis_event_cache.chunkSize');
 var eventStreamer = new bigQueryUtils.BigQueryEventStreamer(bq_config,
     googleAuth.DEFAULT_JWT_SECRETS_FILE,chunkSize);
