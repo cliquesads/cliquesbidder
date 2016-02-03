@@ -76,7 +76,7 @@ fi
 running=$(pm2 list -m | grep "$processname")
 if [ -z "$running" ]; then
     # hook PM2 up to web monitoring with KeyMetrics
-    pm2 link 9661z7ru6dmulvs 6xw07v3gpf6e7hm $hostname
+    pm2 link 9661z7ru6dmulvs 6xw07v3gpf6e7hm $HOSTNAME
     # start in fork mode
     # NOTE: DO NOT EVER RUN IN CLUSTER MODE
     # Controller mechanism relies on a single in-memory record of
