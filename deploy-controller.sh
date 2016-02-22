@@ -43,14 +43,23 @@ done
 
 # Set proper environment variables now that env is set
 if [ "$env" == "production" ]; then
-    source ./activate_production.sh
     processname='bidAgentController'
 else
-    source ./activate_dev.sh
     processname='bidAgentController_dev'
 fi
 
-#install all NPM dependencies
+source activate_env.sh -e $env
+# if activate_env failed then bail
+if [ $? -ne 0 ]; then
+    exit $?
+fi
+
+# Need to be logged into to get @cliques packages
+npm whoami
+if [ $? -ne 0 ]; then
+    npm login
+fi
+# run npm install to install any new dependencies
 npm install
 
 #pull any RTBKit submodule updates
@@ -60,8 +69,8 @@ git submodule update
 #all background services
 ./deploy-rtbkit.sh
 
-#make sure separate redis instance is running on 6380
-./setup/setup-redis.sh
+##make sure separate redis instance is running on 6380
+#./setup/setup-redis.sh
 
 #make sure latest configs are pulled
 if [ ! -d $HOME"/repositories/cliques-config" ]; then
@@ -76,7 +85,7 @@ fi
 running=$(pm2 list -m | grep "$processname")
 if [ -z "$running" ]; then
     # hook PM2 up to web monitoring with KeyMetrics
-    pm2 link 9661z7ru6dmulvs 6xw07v3gpf6e7hm $HOSTNAME
+    pm2 link $KEYMETRICS_PRIVATE_KEY $KEYMETRICS_PUBLIC_KEY $HOSTNAME
     # start in fork mode
     # NOTE: DO NOT EVER RUN IN CLUSTER MODE
     # Controller mechanism relies on a single in-memory record of

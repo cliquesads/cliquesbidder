@@ -1,7 +1,22 @@
 #!/bin/bash
 
+# usage text visible when --help flag passed in
+usage="$(basename "$0") -- Sets up proper version of Redis for this environment and starts redis-server
+
+where:
+    --help  show this help text"
+
+if [ ! -z $1 ]; then
+  if [ $1 == '--help' ]; then
+    echo "$usage"
+    exit 0
+  fi
+fi
+
+# Now get proper environment variables for global package versions, etc.
+source ../config/environments/bidder_environment.cfg
+
 #install redis from source to ensure latest version
-REDISVERSION='3.0.1'
 REDISPATH=$HOME'/redis-'$REDISVERSION
 
 if [ ! -d $REDISPATH ]; then
@@ -15,3 +30,5 @@ fi
 
 cd $REDISPATH'/src'
 ./redis-server $HOME/repositories/cliques-config/rtbkit/redis_controller.conf
+
+exit 0
