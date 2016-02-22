@@ -17,6 +17,8 @@ fi
 sudo apt-get update
 sudo apt-get install gcc make build-essential
 
+cd ..
+
 #make sure config repo is installed
 if [ ! -d $HOME"/repositories/cliques-config" ]; then
     git clone git@github.com:cliquesads/cliques-config.git ../cliques-config
