@@ -17,9 +17,6 @@ fi
 sudo apt-get update
 sudo apt-get install gcc make build-essential
 
-# Now get proper environment variables for global package versions, etc.
-source ../config/environments/bidder_environment.cfg
-
 #make sure config repo is installed
 if [ ! -d $HOME"/repositories/cliques-config" ]; then
     git clone git@github.com:cliquesads/cliques-config.git ../cliques-config
@@ -29,6 +26,9 @@ else
     git pull
     cd ../cliquesbidder
 fi
+
+# Now get proper environment variables for global package versions, etc.
+source ./config/environments/bidder_environment.cfg
 
 #download NVM and install NVM & node
 curl https://raw.githubusercontent.com/creationix/nvm/v0.24.0/install.sh | NVM_DIR=$HOME/repositories/cliquesbidder/.nvm bash
