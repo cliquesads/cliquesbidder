@@ -30,7 +30,7 @@ else
 fi
 
 # Now get proper environment variables for global package versions, etc.
-source ./config/environments/bidder_environment.cfg
+source ../config/environments/bidder_environment.cfg
 
 #download NVM and install NVM & node
 curl https://raw.githubusercontent.com/creationix/nvm/v0.24.0/install.sh | NVM_DIR=$HOME/repositories/cliquesbidder/.nvm bash
