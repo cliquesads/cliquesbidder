@@ -1,4 +1,4 @@
-var node_utils = require('cliques_node_utils');
+var node_utils = require('@cliques/cliques-node-utils');
 var tags = node_utils.tags;
 var bigQueryUtils = node_utils.google.bigQueryUtils;
 var metadataServer = node_utils.google.metadataServer;
