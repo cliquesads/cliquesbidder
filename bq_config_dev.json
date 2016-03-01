@@ -1,0 +1,26 @@
+{
+  "event_tables":{
+    "BID": {
+      "tableId": "bids",
+      "datasetId": "ad_events_dev",
+      "schema": {
+        "fields": [
+          {"name": "hostname", "type": "STRING"},
+          {"name": "level","type": "STRING"},
+          {"name": "msg","type": "STRING"},
+          {"name": "tstamp","type": "TIMESTAMP"},
+          {"name": "uuid","type": "STRING"},
+          {"name": "auctionId","type": "STRING"},
+          {"name": "bidid","type": "STRING"},
+          {"name": "impid","type": "STRING"},
+          {"name": "bid","type": "FLOAT"},
+          {"name": "placement", "type": "STRING"},
+          {"name": "creative_group", "type": "STRING"},
+          {"name": "campaign", "type": "STRING"},
+          {"name": "advertiser", "type": "STRING"},
+          {"name": "adv_clique", "type": "STRING"}
+        ]
+      }
+    }
+  }
+}
