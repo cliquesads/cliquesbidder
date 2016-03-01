@@ -109,6 +109,7 @@ function _parseEnvConfig(bootstrap_file){
 
 // Configs for tag  object
 var ADSERVER_HOST= config.get('AdServer.http.external.hostname');
+var ADSERVER_SECURE_HOST= config.get('AdServer.https.external.hostname');
 var ADSERVER_PORT = config.get('AdServer.http.external.port');
 
 /**
@@ -124,7 +125,12 @@ function _parseCoreConfig(campaign, options){
     var bidProbability  = options.bidProbability || 1.0;
 
     // tag object used to generate creative markup from config stored in DB
-    var tag = new tags.ImpTag(ADSERVER_HOST, { port: ADSERVER_PORT});
+    var tag = new tags.ImpTag(ADSERVER_HOST, {
+        port: ADSERVER_PORT,
+        secure_hostname: ADSERVER_SECURE_HOST,
+        //TODO: Default to secure for now for all ads because markup generated statically, fix this!!
+        secure: true
+    });
     var account = new BidAgentAccount(campaign.id);
 
     var coreConfig = {
