@@ -1,4 +1,4 @@
-var node_utils = require('cliques_node_utils');
+var node_utils = require('@cliques/cliques-node-utils');
 var tags = node_utils.tags;
 var bigQueryUtils = node_utils.google.bigQueryUtils;
 var metadataServer = node_utils.google.metadataServer;
@@ -29,7 +29,12 @@ var logfile = path.join(
     'nodebidagent',
     util.format('bidagent_%s.log',node_utils.dates.isoFormatUTCNow())
 );
-var bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config.json');
+if (process.env.NODE_ENV === 'production'){
+    var bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config.json');
+} else {
+    // use dev config if not running in production
+    bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config_dev.json','/google/bq_config_dev.json');
+}
 var chunkSize = config.get('Bidder.redis_event_cache.chunkSize');
 var eventStreamer = new bigQueryUtils.BigQueryEventStreamer(bq_config,
     googleAuth.DEFAULT_JWT_SECRETS_FILE,chunkSize);
@@ -104,6 +109,7 @@ function _parseEnvConfig(bootstrap_file){
 
 // Configs for tag  object
 var ADSERVER_HOST= config.get('AdServer.http.external.hostname');
+var ADSERVER_SECURE_HOST= config.get('AdServer.https.external.hostname');
 var ADSERVER_PORT = config.get('AdServer.http.external.port');
 
 /**
@@ -119,7 +125,12 @@ function _parseCoreConfig(campaign, options){
     var bidProbability  = options.bidProbability || 1.0;
 
     // tag object used to generate creative markup from config stored in DB
-    var tag = new tags.ImpTag(ADSERVER_HOST, { port: ADSERVER_PORT});
+    var tag = new tags.ImpTag(ADSERVER_HOST, {
+        port: ADSERVER_PORT,
+        secure_hostname: ADSERVER_SECURE_HOST,
+        //TODO: Default to secure for now for all ads because markup generated statically, fix this!!
+        secure: true
+    });
     var account = new BidAgentAccount(campaign.id);
 
     var coreConfig = {

@@ -1,5 +1,5 @@
 //first party deps
-var node_utils = require('cliques_node_utils');
+var node_utils = require('@cliques/cliques-node-utils');
 var logging = node_utils.logging;
 var fake_bidder = require('./fake_bidder');
 
