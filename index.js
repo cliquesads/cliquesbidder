@@ -156,18 +156,20 @@ function _parseCoreConfig(campaign, options){
     var adomain = [campaign.parent_advertiser.website.split('.').slice(-2).join('.')];
     for (var i=0; i < campaign.creativegroups.length; i++){
         var crg = campaign.creativegroups[i];
-        coreConfig.creatives.push({
-            format: { width: crg.w, height: crg.h },
-            id: i,
-            name: crg.name,
-            tagId: crg.id, //don't know why this is necessary, don't even know what it means
-            providerConfig: {
-                cliques: {
-                    adm: tag.render(crg),
-                    adomain: adomain
+        if (crg.active){
+            coreConfig.creatives.push({
+                format: { width: crg.w, height: crg.h },
+                id: i,
+                name: crg.name,
+                tagId: crg.id, //don't know why this is necessary, don't even know what it means
+                providerConfig: {
+                    cliques: {
+                        adm: tag.render(crg),
+                        adomain: adomain
+                    }
                 }
-            }
-        });
+            });
+        }
     }
     return coreConfig;
 }
