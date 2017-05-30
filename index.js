@@ -1,5 +1,6 @@
 var node_utils = require('@cliques/cliques-node-utils');
 var tags = node_utils.tags;
+var urls = node_utils.urls;
 var bigQueryUtils = node_utils.google.bigQueryUtils;
 var metadataServer = node_utils.google.metadataServer;
 var googleAuth = node_utils.google.auth;
@@ -131,6 +132,21 @@ function _parseCoreConfig(campaign, options){
         //TODO: Default to secure for now for all ads because markup generated statically, fix this!!
         secure: true
     });
+
+    var url = new urls.ImpURL(ADSERVER_HOST, ADSERVER_SECURE_HOST, ADSERVER_PORT);
+
+    // small sub-function to render proper ad markup, depending on creative type
+    function _getCreativeGroupMarkup(crg){
+        var markup;
+        // if creativeGroup is Native, just return URL, otherwise render whole tag
+        if (crg.type === 'native'){
+            markup = url.format({ crgid: crg.id, type: 'native'}, true);
+        } else {
+            markup = tag.render(crg);
+        }
+        return markup;
+    }
+
     var account = new BidAgentAccount(campaign.id);
 
     var coreConfig = {
@@ -164,7 +180,7 @@ function _parseCoreConfig(campaign, options){
                 tagId: crg.id, //don't know why this is necessary, don't even know what it means
                 providerConfig: {
                     cliques: {
-                        adm: tag.render(crg),
+                        adm: _getCreativeGroupMarkup(crg),
                         adomain: adomain
                     }
                 }
