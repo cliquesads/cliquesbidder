@@ -89,7 +89,11 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         return;
     }
 
-    var geoBranch = [bidRequest.location.countryCode, bidRequest.location.regionCode, bidRequest.location.cityName];
+    var geoBranch = [
+        bidRequest.location.countryCode,
+        bidRequest.location.countryCode + '-' + bidRequest.location.regionCode,
+        bidRequest.location.cityName
+    ];
     var isGeoBlocked = configHelpers["getGeoBlockStatus"](geoBranch, targetingConfig.blocked_geos);
     if (isGeoBlocked) {
         return;
