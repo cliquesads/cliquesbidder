@@ -49,37 +49,6 @@ var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
 // You can skip overriding some of these handlers by setting strictMode(false);
 
 /**
- * Linearly modifies an original starting bid according to weights specified
- * in targeting config, and value of given parameter present in bid request
- *
- * Assumes "modifiers" is campaign config field value composed by the
- * "weightTargetingSchema" in mongoose Models.
- *
- * @param bid
- * @param requestValue
- * @param modifiers
- */
-function modifyBid(bid, requestValue, modifiers){
-    if (modifiers){
-        // first filter modifiers to see if
-        var filtered = modifiers.filter(function(obj){
-            return obj.target.toString() == requestValue;
-        });
-        //console.log("Filtered targeting objects: " + JSON.stringify(filtered, null,2));
-        if (filtered.length == 1){
-            return bid * filtered[0].weight;
-        } else if (filtered.length == 0){
-            return bid;
-        } else {
-            console.log("ERROR: multiple matching criteria found in modifiers: "
-            + JSON.stringify(filtered));
-        }
-    } else {
-        return bid;
-    }
-}
-
-/**
  * Handles the actual bidding part.
  * @param timestamp
  * @param auctionId
@@ -120,6 +89,12 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         return;
     }
 
+    var geoBranch = [bidRequest.location.countryCode, bidRequest.location.regionCode, bidRequest.location.cityName];
+    var isGeoBlocked = configHelpers["getGeoBlockStatus"](geoBranch, targetingConfig.blocked_geos);
+    if (isGeoBlocked) {
+        return;
+    }
+
     //================================================================//
     //===================== BEGIN BID MODIFIERS ======================//
     //================================================================//
@@ -127,8 +102,10 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     var bid = targetingConfig.base_bid;
     var inventoryWeight = configHelpers["getInventoryWeight"](branch, targetingConfig.inventory_targets);
     bid = inventoryWeight * bid;
-    bid = modifyBid(bid, bidRequest.device.geo.metro, targetingConfig.dma_targets);
-    bid = modifyBid(bid, bidRequest.device.geo.country, targetingConfig.country_targets);
+
+    var geoWeight = configHelpers["getGeoWeight"](geoBranch, targetingConfig.geo_targets);
+    bid = geoWeight * bid;
+
     bid = Math.min(bid, targetingConfig.max_bid);
 
     // Don't bid if bid is zero
