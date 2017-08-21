@@ -1,0 +1,17 @@
+{
+    "tags": {
+        "allowUnknownTags": true,
+        "dictionaries": ["jsdoc","closure"]
+    },
+    "source": {
+        "include": ["bidding-agents/","lib/","index.js"],
+        "exclude": ["node_modules/","fakebidder/","rtbkit/","sample-data/","setup/"]
+    },
+    "plugins": [
+        "plugins/markdown"
+    ],
+    "opts": {
+        "readme": "JSDOC_README.md",
+        "recurse": true
+    }
+}
