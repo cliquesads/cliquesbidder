@@ -1,6 +1,6 @@
 {
   "name": "cliquesbidder",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Cliques Bidder",
   "main": "index.js",
   "scripts": {
