@@ -196,6 +196,10 @@ function _parseTargetingConfig(campaign){
         max_bid: campaign.max_bid,
         country_targets: campaign.country_targets,
         dma_targets: campaign.dma_targets,
+
+        geo_targets: campaign.geo_targets,
+        blocked_geos: campaign.blocked_geos,
+
         placement_targets: campaign.placement_targets,
         inventory_targets: campaign.inventory_targets,
         blocked_inventory: campaign.blocked_inventory,
@@ -218,7 +222,9 @@ function _parseTargetingConfig(campaign){
 function _getHelperFunctions(){
     return {
         getInventoryWeight: advertiserModels.Campaign.getInventoryWeight,
-        getInventoryBlockStatus: advertiserModels.Campaign.getInventoryBlockStatus
+        getInventoryBlockStatus: advertiserModels.Campaign.getInventoryBlockStatus,
+        getGeoWeight: advertiserModels.Campaign.getGeoWeight,
+        getGeoBlockStatus: advertiserModels.Campaign.getGeoBlockStatus,
     }
 }
 
