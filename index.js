@@ -200,6 +200,9 @@ function _parseTargetingConfig(campaign){
         geo_targets: campaign.geo_targets,
         blocked_geos: campaign.blocked_geos,
 
+        keyword_targets: campaign.keyword_targets,
+        blocked_keywords: campaign.blocked_keywords,
+
         placement_targets: campaign.placement_targets,
         inventory_targets: campaign.inventory_targets,
         blocked_inventory: campaign.blocked_inventory,

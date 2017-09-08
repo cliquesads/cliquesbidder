@@ -83,6 +83,15 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         return;
     }
 
+    var pageKeywords = bidRequest.imp[0].ext.keywords;
+    // Check if the page contains keyword that is blocked by current bid request
+    var blockedKeywords = targetingConfig.blocked_keywords;
+    for (var i = 0; i < blockedKeywords.length; i ++) {
+        if (pageKeywords.indexOf(blockedKeywords[i].target) !== -1) {
+            return;
+        }
+    }
+
     var branch = Array.prototype.slice.call(bidRequest.imp[0].ext.branch);
     var isBlocked = configHelpers["getInventoryBlockStatus"](branch, targetingConfig.blocked_inventory);
     if (isBlocked){
@@ -109,6 +118,23 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
 
     var geoWeight = configHelpers["getGeoWeight"](geoBranch, targetingConfig.geo_targets);
     bid = geoWeight * bid;
+
+    var targetedKeywords = targetingConfig.keyword_targets;
+    var keywordWeight = 0;
+    for (var j = 0; j < targetedKeywords.length; j ++) {
+        if (pageKeywords.indexOf(targetedKeywords[j].target) !== -1) {
+            // the bidding page contains at least one targeted keyword, 
+            // given that it's possible the bidding page contains 
+            // more than one targeted keyword, 
+            // need to find out the largest weight.
+            if (targetedKeywords[j].weight > keywordWeight) {
+                keywordWeight = targetedKeywords[j].weight;
+            }
+        }
+    }
+    if (keywordWeight > 0) {
+        bid = keywordWeight * bid;
+    }
 
     bid = Math.min(bid, targetingConfig.max_bid);
 
