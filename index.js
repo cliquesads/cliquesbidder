@@ -228,7 +228,9 @@ function _getHelperFunctions(){
         getInventoryBlockStatus: advertiserModels.Campaign.getInventoryBlockStatus,
         getGeoWeight: advertiserModels.Campaign.getGeoWeight,
         getGeoBlockStatus: advertiserModels.Campaign.getGeoBlockStatus,
-    }
+        getKeywordWeight: advertiserModels.Campaign.getKeywordWeight,
+        getKeywordBlockStatus: advertiserModels.Campaign.getKeywordBlockStatus,
+    };
 }
 
 /**
