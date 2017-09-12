@@ -2,7 +2,7 @@
   "event_tables":{
     "BID": {
       "tableId": "bids",
-      "datasetId": "ad_events_dev",
+      "datasetId": "smartertravel_ad_events_dev",
       "schema": {
         "fields": [
           {"name": "hostname", "type": "STRING"},
