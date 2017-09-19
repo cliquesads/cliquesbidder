@@ -52,6 +52,7 @@ var bidForSingleImp = function(impIndex, auctionId, bidRequest, bids, wcm){
     // TODO: figure out if this is true
     var spotIndex = impIndex;
     var spot = bidRequest.spots[spotIndex];
+    console.log(JSON.stringify(bidRequest.spots));
     // Take first creative from list of avail creatives, since
     // "creatives" here are really creative groups, and there should only
     // be one creative group per size per campaign
