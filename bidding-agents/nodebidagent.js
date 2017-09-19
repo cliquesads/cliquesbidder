@@ -48,25 +48,10 @@ budgetController.configure_and_run(agentConfig);
 var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
 // You can skip overriding some of these handlers by setting strictMode(false);
 
-/**
- * Handles the actual bidding part.
- * @param timestamp
- * @param auctionId
- * @param bidRequest
- * @param bids
- * @param timeAvailableMs
- * @param augmentations
- * @param wcm
- */
-agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvailableMs, augmentations, wcm){
-    // Loop over bids in case there are multiple "spots" per bid request
-    // Currently, there are not, Cliques Exchange is set up to send one "spot"
-    // (i.e. placement) per bid request, so this is a bit unnecessary.
-    // But keeping this in here for future use in case this changes.
-    //for (var i=0; i<bids.length; i++){
-    //console.log(JSON.stringify(bidRequest. null, 2));
-
-    var spot = bidRequest.spots[0];
+var bidForSingleImp = function(impIndex, auctionId, bidRequest, bids, wcm){
+    // TODO: figure out if this is true
+    var spotIndex = impIndex;
+    var spot = bidRequest.spots[spotIndex];
     // Take first creative from list of avail creatives, since
     // "creatives" here are really creative groups, and there should only
     // be one creative group per size per campaign
@@ -83,7 +68,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
         return;
     }
 
-    var branch = Array.prototype.slice.call(bidRequest.imp[0].ext.branch);
+    var branch = Array.prototype.slice.call(bidRequest.imp[impIndex].ext.branch);
     var isBlocked = configHelpers["getInventoryBlockStatus"](branch, targetingConfig.blocked_inventory);
     if (isBlocked){
         return;
@@ -122,7 +107,7 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     //================================================================//
 
     // assume imp indexing is identical to spot indexing?
-    var impid = bidRequest.imp[0].id;
+    var impid = bidRequest.imp[impIndex].id;
 
     // Handle logging to parent here real quick
     // have to do most of the hardwork for logging here
@@ -153,10 +138,46 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
     // bids object which has been validated using the "bid" call.
     // The explanation for the C++ analog of this method is here:
     // https://github.com/rtbkit/rtbkit/wiki/How-to-write-a-bidding-agent
-    bids.bid(0,creativeIndex, amount, priority); // spotId, creativeIndex, price, priority
+    bids.bid(spotIndex,creativeIndex, amount, priority); // spotId, creativeIndex, price, priority
     //}
     agent.doBid(auctionId, bids, {}, wcm); // auction id, collection of bids, meta, win cost model.
     amount = null;
+};
+
+/**
+ * Handles the actual bidding part.
+ * @param timestamp
+ * @param auctionId
+ * @param bidRequest
+ * @param bids
+ * @param timeAvailableMs
+ * @param augmentations
+ * @param wcm
+ */
+agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvailableMs, augmentations, wcm){
+
+    //The maximum is exclusive and the minimum is inclusive
+    function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min)) + min;
+    }
+
+    if (bidRequest.imp.length > 1){
+        // if multiBid is set to true, loop over all spots / imps and bid for all of them as applicable
+        if (targetingConfig.multi_bid){
+            for (var i=0; i<bidRequest.imp.length; i++) {
+                bidForSingleImp(i, auctionId, bidRequest, bids, wcm);
+            }
+        // if not, only bid for one of them by randomly selecting integer in index range
+        } else {
+            var rand = getRandomInt(0, bidRequest.imp.length);
+            bidForSingleImp(rand, auctionId, bidRequest, bids, wcm);
+        }
+    } else {
+        // otherwise, just bid for zero-th impression.
+        bidForSingleImp(0, auctionId, bidRequest, bids, wcm);
+    }
 };
 
 agent.onError = function(timestamp, description, message){

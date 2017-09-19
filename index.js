@@ -201,6 +201,7 @@ function _parseTargetingConfig(campaign){
         blocked_geos: campaign.blocked_geos,
 
         placement_targets: campaign.placement_targets,
+        multi_bid: campaign.multi_bid,
         inventory_targets: campaign.inventory_targets,
         blocked_inventory: campaign.blocked_inventory,
         start_date: campaign.start_date,
