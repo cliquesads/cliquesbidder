@@ -48,11 +48,20 @@ budgetController.configure_and_run(agentConfig);
 var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
 // You can skip overriding some of these handlers by setting strictMode(false);
 
-var bidForSingleImp = function(impIndex, auctionId, bidRequest, bids, wcm){
-    // TODO: figure out if this is true
-    var spotIndex = impIndex;
+/**
+ * Determines amount & priority for bid for an individual impression, and logs
+ * each bid as well to stdout.
+ *
+ * @param spotIndex
+ * @param auctionId
+ * @param bidRequest
+ * @param bids
+ */
+var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
+
+    // Note: "spots" are the internal shorthand for impressions. Why that is I have no idea,
+    // but they're used pretty interchangeably throughout RTBKit.
     var spot = bidRequest.spots[spotIndex];
-    console.log(JSON.stringify(bidRequest.spots));
     // Take first creative from list of avail creatives, since
     // "creatives" here are really creative groups, and there should only
     // be one creative group per size per campaign
@@ -69,7 +78,7 @@ var bidForSingleImp = function(impIndex, auctionId, bidRequest, bids, wcm){
         return;
     }
 
-    var branch = Array.prototype.slice.call(bidRequest.imp[impIndex].ext.branch);
+    var branch = Array.prototype.slice.call(bidRequest.imp[spotIndex].ext.branch);
     var isBlocked = configHelpers["getInventoryBlockStatus"](branch, targetingConfig.blocked_inventory);
     if (isBlocked){
         return;
@@ -108,7 +117,7 @@ var bidForSingleImp = function(impIndex, auctionId, bidRequest, bids, wcm){
     //================================================================//
 
     // assume imp indexing is identical to spot indexing?
-    var impid = bidRequest.imp[impIndex].id;
+    var impid = bidRequest.imp[spotIndex].id;
 
     // Handle logging to parent here real quick
     // have to do most of the hardwork for logging here
@@ -124,29 +133,27 @@ var bidForSingleImp = function(impIndex, auctionId, bidRequest, bids, wcm){
     // this is super hacky and I don't like it, but it works. Im sorry.
     console.log('BID ' + JSON.stringify(meta));
 
-    //================================================================//
-    //============================ DO BID ============================//
-    //================================================================//
+    //====================================================================//
+    //============================ CREATE BID ============================//
+    //====================================================================//
 
     // convert to RTBKit currency object
     var amount = new RTBkit.USD_CPM(bid);
-    //console.log("Amount after conversion to object:" + amount);
 
-    var priority = 1; //I'm not really sure how core handles this, but default to 1
+    //I'm not really sure how core handles this, but default to 1
+    var priority = 1;
 
-    // This part feels a little weird, unclear how this "bids" object is
-    // supposed to behave, but you have to do this b/c agent.doBid only accepts
-    // bids object which has been validated using the "bid" call.
-    // The explanation for the C++ analog of this method is here:
-    // https://github.com/rtbkit/rtbkit/wiki/How-to-write-a-bidding-agent
-    bids.bid(spotIndex,creativeIndex, amount, priority); // spotId, creativeIndex, price, priority
-    //}
-    agent.doBid(auctionId, bids, {}, wcm); // auction id, collection of bids, meta, win cost model.
-    amount = null;
+    // agent.doBid only accepts bids object which has been validated using the "bid" call.
+    return {
+        creativeIndex: creativeIndex,
+        amount: amount,
+        priority: priority
+    }
 };
 
 /**
  * Handles the actual bidding part.
+ *
  * @param timestamp
  * @param auctionId
  * @param bidRequest
@@ -158,27 +165,37 @@ var bidForSingleImp = function(impIndex, auctionId, bidRequest, bids, wcm){
 agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvailableMs, augmentations, wcm){
 
     //The maximum is exclusive and the minimum is inclusive
-    function getRandomInt(min, max) {
+    function _getRandomInt(min, max) {
         min = Math.ceil(min);
         max = Math.floor(max);
         return Math.floor(Math.random() * (max - min)) + min;
     }
 
+    function _addBidtoBidsObject(spotIndex){
+        var bidArgs = getBidArgs(spotIndex, auctionId, bidRequest, bids);
+        bids.bid(spotIndex, bidArgs.creativeIndex, bidArgs.amount, bidArgs.priority);
+    }
+
+    // if multiple imp bid request is received, check to whether
+    // multiBid is enabled, and if so loop over all spots to determine bid
     if (bidRequest.imp.length > 1){
         // if multiBid is set to true, loop over all spots / imps and bid for all of them as applicable
         if (targetingConfig.multi_bid){
             for (var i=0; i<bidRequest.imp.length; i++) {
-                bidForSingleImp(i, auctionId, bidRequest, bids, wcm);
+                _addBidtoBidsObject(i);
             }
         // if not, only bid for one of them by randomly selecting integer in index range
         } else {
-            var rand = getRandomInt(0, bidRequest.imp.length);
-            bidForSingleImp(rand, auctionId, bidRequest, bids, wcm);
+            var rand = _getRandomInt(0, bidRequest.imp.length);
+            _addBidtoBidsObject(rand);
         }
     } else {
         // otherwise, just bid for zero-th impression.
-        bidForSingleImp(0, auctionId, bidRequest, bids, wcm);
+        _addBidtoBidsObject(0);
     }
+
+    // Finally, submit the bid(s)
+    agent.doBid(auctionId, bids, {}, wcm);
 };
 
 agent.onError = function(timestamp, description, message){
