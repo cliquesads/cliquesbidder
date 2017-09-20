@@ -352,9 +352,14 @@ _Controller.prototype.createBidAgent = function(campaign){
                 try {
                     //TODO: have to wrap in try catch as this throws weird
                     //TODO: parsing bugs once in a while, figure out root cause
-                    var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
-                    // call logger method, pass campaign and advertiser in.
-                    logger.bid(meta, campaign, campaign.parent_advertiser);
+                    // stdout stream sometimes emits data event for multiple lines at a time
+                    // even if sent to stdout as separate log lines, so split on \n
+                    var loglines = logline.split('\n');
+                    loglines.forEach(function(line){
+                        var meta = JSON.parse(line.slice(logging.BID_PREFIX.length));
+                        // call logger method, pass campaign and advertiser in.
+                        logger.bid(meta, campaign, campaign.parent_advertiser);
+                    });
                 } catch (e) {
                     logger.error("ERROR parsing bid logline -- tried to parse the following:");
                     logger.info(logline);
