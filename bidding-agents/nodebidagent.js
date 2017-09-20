@@ -78,6 +78,13 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
         return;
     }
 
+    var pageKeywords = bidRequest.imp[0].ext.keywords;
+    // Check if the page contains keyword that is blocked by current bid request
+    var isKeywordBlocked = configHelpers["getKeywordBlockStatus"](pageKeywords, targetingConfig.blocked_keywords);
+    if (isKeywordBlocked) {
+        return;
+    }
+    
     var branch = Array.prototype.slice.call(bidRequest.imp[spotIndex].ext.branch);
     var isBlocked = configHelpers["getInventoryBlockStatus"](branch, targetingConfig.blocked_inventory);
     if (isBlocked){
@@ -104,6 +111,9 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
 
     var geoWeight = configHelpers["getGeoWeight"](geoBranch, targetingConfig.geo_targets);
     bid = geoWeight * bid;
+
+    var keywordWeight = configHelpers["getKeywordWeight"](pageKeywords, targetingConfig.keyword_targets);
+    bid = keywordWeight * bid;
 
     bid = Math.min(bid, targetingConfig.max_bid);
 

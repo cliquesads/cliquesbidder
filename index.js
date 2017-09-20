@@ -200,6 +200,9 @@ function _parseTargetingConfig(campaign){
         geo_targets: campaign.geo_targets,
         blocked_geos: campaign.blocked_geos,
 
+        keyword_targets: campaign.keyword_targets,
+        blocked_keywords: campaign.blocked_keywords,
+
         placement_targets: campaign.placement_targets,
         multi_bid: campaign.multi_bid,
         inventory_targets: campaign.inventory_targets,
@@ -226,7 +229,9 @@ function _getHelperFunctions(){
         getInventoryBlockStatus: advertiserModels.Campaign.getInventoryBlockStatus,
         getGeoWeight: advertiserModels.Campaign.getGeoWeight,
         getGeoBlockStatus: advertiserModels.Campaign.getGeoBlockStatus,
-    }
+        getKeywordWeight: advertiserModels.Campaign.getKeywordWeight,
+        getKeywordBlockStatus: advertiserModels.Campaign.getKeywordBlockStatus,
+    };
 }
 
 /**
