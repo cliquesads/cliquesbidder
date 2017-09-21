@@ -230,7 +230,7 @@ function _getHelperFunctions(){
         getGeoWeight: advertiserModels.Campaign.getGeoWeight,
         getGeoBlockStatus: advertiserModels.Campaign.getGeoBlockStatus,
         getKeywordWeight: advertiserModels.Campaign.getKeywordWeight,
-        getKeywordBlockStatus: advertiserModels.Campaign.getKeywordBlockStatus,
+        getKeywordBlockStatus: advertiserModels.Campaign.getKeywordBlockStatus
     };
 }
 
@@ -355,10 +355,14 @@ _Controller.prototype.createBidAgent = function(campaign){
                     // stdout stream sometimes emits data event for multiple lines at a time
                     // even if sent to stdout as separate log lines, so split on \n
                     var loglines = logline.split('\n');
+
                     loglines.forEach(function(line){
-                        var meta = JSON.parse(line.slice(logging.BID_PREFIX.length));
-                        // call logger method, pass campaign and advertiser in.
-                        logger.bid(meta, campaign, campaign.parent_advertiser);
+                        // split above will create empty last line
+                        if (line){
+                            var meta = JSON.parse(line.slice(logging.BID_PREFIX.length));
+                            // call logger method, pass campaign and advertiser in.
+                            logger.bid(meta, campaign, campaign.parent_advertiser);    
+                        }
                     });
                 } catch (e) {
                     logger.error("ERROR parsing bid logline -- tried to parse the following:");
