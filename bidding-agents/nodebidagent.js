@@ -183,7 +183,9 @@ agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvaila
 
     function _addBidtoBidsObject(spotIndex){
         var bidArgs = getBidArgs(spotIndex, auctionId, bidRequest, bids);
-        bids.bid(spotIndex, bidArgs.creativeIndex, bidArgs.amount, bidArgs.priority);
+        if (bidArgs) {
+            bids.bid(spotIndex, bidArgs.creativeIndex, bidArgs.amount, bidArgs.priority);
+        }
     }
 
     // if multiple imp bid request is received, check to whether
