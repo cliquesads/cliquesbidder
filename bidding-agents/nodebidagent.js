@@ -78,7 +78,11 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
         return;
     }
 
-    var pageKeywords = bidRequest.imp[0].ext.keywords;
+    // Somehow bidRequest.site is undefined,
+    // have to use the following trick to retrieve bidRequest.site
+    var copiedBidRequest = JSON.parse(JSON.stringify(bidRequest));
+    var pageKeywords = copiedBidRequest.site.keywords.split(',');
+ 
     // Check if the page contains keyword that is blocked by current bid request
     var isKeywordBlocked = configHelpers["getKeywordBlockStatus"](pageKeywords, targetingConfig.blocked_keywords);
     if (isKeywordBlocked) {
