@@ -18,7 +18,8 @@
           {"name": "creative_group", "type": "STRING"},
           {"name": "campaign", "type": "STRING"},
           {"name": "advertiser", "type": "STRING"},
-          {"name": "adv_clique", "type": "STRING"}
+          {"name": "adv_clique", "type": "STRING"},
+          {"name": "bid_keyword", "type": "STRING"}
         ]
       }
     }

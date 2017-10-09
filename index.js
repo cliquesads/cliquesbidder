@@ -69,9 +69,11 @@ var mongo_connection = node_utils.mongodb.createConnectionWrapper(mongoURI, mong
 // TODO: technically if subscriber gets a message before the connection opens,
 // TODO: any reference to these models will fail.
 var advertiserModels;
+var publisherModels;
 var controller;
 mongo_connection.once('open', function(callback){
     advertiserModels = new node_utils.mongodb.models.AdvertiserModels(mongo_connection,{readPreference: 'secondary'});
+    publisherModels = new node_utils.mongodb.models.PublisherModels(mongo_connection, {readPreference: 'secondary'});
     /* -------------------- CONTROLLER INIT ---------------------- */
     // Use redis to store list of campaigns for currently active
     controller = new _Controller(redisClient);
@@ -360,8 +362,21 @@ _Controller.prototype.createBidAgent = function(campaign){
                         // split above will create empty last line
                         if (line){
                             var meta = JSON.parse(line.slice(logging.BID_PREFIX.length));
-                            // call logger method, pass campaign and advertiser in.
-                            logger.bid(meta, campaign, campaign.parent_advertiser);    
+                            // ycx::: Find placement for this bid in order to get parent_site.keywords since I haven't figure out how to retrieve site.keywords from bidRequest here
+                            publisherModels.getNestedObjectById(meta.placement, 'Placement', function(err, placement) {
+                                if (err) throw new Error(err);
+                                // Decide if specific targeted keyword has been used to modify weight, if so, log it
+                                var pageKeywords = placement.parent_page.keywords;
+                                var agentConfig = AgentConfig.deserialize(serialized_config),
+                                    configHelpers = agentConfig.helpers,
+                                    targetingConfig = agentConfig.targetingConfig;
+                                var bidKeywordInfo = configHelpers["getKeywordWeight"](pageKeywords, targetingConfig.keyword_targets);
+                                if (bidKeywordInfo.keyword !== '') {
+                                    meta.bid_keyword = bidKeywordInfo.keyword;
+                                }
+                                // call logger method, pass campaign and advertiser in.
+                                logger.bid(meta, campaign, campaign.parent_advertiser);    
+                            });
                         }
                     });
                 } catch (e) {
