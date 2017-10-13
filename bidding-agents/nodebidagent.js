@@ -121,12 +121,10 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
     var geoWeight = configHelpers["getGeoWeight"](geoBranch, targetingConfig.geo_targets);
     bid = geoWeight * bid;
 
-    // var keywordWeight = configHelpers["getKeywordWeight"](pageKeywords, targetingConfig.keyword_targets);
     var bidKeywordInfo = configHelpers["getKeywordWeight"](pageKeywords, targetingConfig.keyword_targets);
     if (bidKeywordInfo.keyword !== '') {
         bid = bidKeywordInfo.weight * bid; 
     }
-    bid = keywordWeight * bid;
 
     bid = Math.min(bid, targetingConfig.max_bid);
 
