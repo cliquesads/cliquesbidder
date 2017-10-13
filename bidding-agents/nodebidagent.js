@@ -126,7 +126,6 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
     if (bidKeywordInfo.keyword !== '') {
         bid = bidKeywordInfo.weight * bid; 
     }
-    bid = keywordWeight * bid;
 
     bid = Math.min(bid, targetingConfig.max_bid);
 
