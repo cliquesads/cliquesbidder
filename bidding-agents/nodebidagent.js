@@ -48,6 +48,13 @@ budgetController.configure_and_run(agentConfig);
 var agent = new RTBkit.BiddingAgent("cliquesBidAgent", services);
 // You can skip overriding some of these handlers by setting strictMode(false);
 
+//The maximum is exclusive and the minimum is inclusive
+function _getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+
 /**
  * Determines amount & priority for bid for an individual impression, and logs
  * each bid as well to stdout.
@@ -162,8 +169,12 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
     // convert to RTBKit currency object
     var amount = new RTBkit.USD_CPM(bid);
 
-    //I'm not really sure how core handles this, but default to 1
-    var priority = 1;
+    // "randomize" priority ONLY to "randomize" bids that win
+    // in the event of a tie.
+    // TODO: Should investigate how core handles priority further, unclear
+    // TODO: if this will have unintended consequences to the internal auction beyond
+    // TODO: tie-breaking
+    var priority = _getRandomInt(1,10);
 
     // agent.doBid only accepts bids object which has been validated using the "bid" call.
     return {
@@ -185,13 +196,6 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
  * @param wcm
  */
 agent.onBidRequest = function(timestamp, auctionId, bidRequest, bids, timeAvailableMs, augmentations, wcm){
-
-    //The maximum is exclusive and the minimum is inclusive
-    function _getRandomInt(min, max) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min)) + min;
-    }
 
     function _addBidtoBidsObject(spotIndex){
         var bidArgs = getBidArgs(spotIndex, auctionId, bidRequest, bids);
