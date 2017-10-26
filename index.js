@@ -486,12 +486,14 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
     if (err) throw new Error('Error creating subscription to createBidder topic: ' + err);
     // message listener
     subscription.on('message', function(message){
-        var campaign_id = message.data;
-        filterCampaignByClique(campaign_id, function(err, campaign){
-            if (err) throw new Error(err);
-            logger.info('Received createBidder message for campaignId ' + campaign_id + ', spawning bidagent...');
-            controller.createBidAgent(campaign);
-        });
+        if (message.attributes.NODE_ENV === process.env.NODE_ENV){
+            var campaign_id = message.data;
+            filterCampaignByClique(campaign_id, function(err, campaign){
+                if (err) throw new Error(err);
+                logger.info('Received createBidder message for campaignId ' + campaign_id + ', spawning bidagent...');
+                controller.createBidAgent(campaign);
+            });
+        }
     });
     subscription.on('error', function(err){
         logger.error('Error subscribing to CreateBidder topic, will not be able to receive signals until this is fixed');
@@ -505,12 +507,14 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
 bidderPubSub.subscriptions.updateBidder(function(err, subscription){
     if (err) throw new Error('Error creating subscription to updateBidder topic: ' + err);
     subscription.on('message', function(message){
-        var campaign_id = message.data;
-        filterCampaignByClique(campaign_id, function(err, campaign) {
-            if (err) throw new Error(err);
-            logger.info('Received updateBidder message for campaignId ' + campaign_id + ', updating config...');
-            controller.updateBidAgent(campaign);
-        });
+        if (message.attributes.NODE_ENV === process.env.NODE_ENV) {
+            var campaign_id = message.data;
+            filterCampaignByClique(campaign_id, function (err, campaign) {
+                if (err) throw new Error(err);
+                logger.info('Received updateBidder message for campaignId ' + campaign_id + ', updating config...');
+                controller.updateBidAgent(campaign);
+            });
+        }
     });
     subscription.on('error', function(err){
         logger.error('Error subscribing to UpdateBidder topic, will not be able to receive signals until this is fixed');
@@ -524,11 +528,13 @@ bidderPubSub.subscriptions.updateBidder(function(err, subscription){
 bidderPubSub.subscriptions.stopBidder(function(err, subscription){
     if (err) throw new Error('Error creating subscription to stopBidder topic: ' + err);
     subscription.on('message', function(message){
-        var campaign_id = message.data;
-        filterCampaignByClique(campaign_id, function(err, campaign){
-            logger.info('Received stopBidder message for campaignId '+ campaign_id + ', killing bidAgent now...');
-            controller.stopBidAgent(campaign);
-        });
+        if (message.attributes.NODE_ENV === process.env.NODE_ENV) {
+            var campaign_id = message.data;
+            filterCampaignByClique(campaign_id, function (err, campaign) {
+                logger.info('Received stopBidder message for campaignId ' + campaign_id + ', killing bidAgent now...');
+                controller.stopBidAgent(campaign);
+            });
+        }
     });
     subscription.on('error', function(err){
         logger.error('Error subscribing to StopBidder topic, will not be able to receive signals until this is fixed');
