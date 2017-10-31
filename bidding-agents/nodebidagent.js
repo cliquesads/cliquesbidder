@@ -156,7 +156,8 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
         impid: impid,
         bid: bid,
         placement: spot.tagid,
-        creative_group: creativeConfig.tagId
+        creative_group: creativeConfig.tagId,
+        page_keywords: pageKeywords
     };
     // this is super hacky and I don't like it, but it works. Im sorry.
     console.log('BID ' + JSON.stringify(meta));
