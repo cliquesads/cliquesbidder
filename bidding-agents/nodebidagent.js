@@ -157,8 +157,10 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
         bid: bid,
         placement: spot.tagid,
         creative_group: creativeConfig.tagId,
-        page_keywords: pageKeywords
     };
+    if (bidKeywordInfo.keyword !== '') {
+        meta.bid_keyword = bidKeywordInfo.keyword;
+    }
     // this is super hacky and I don't like it, but it works. Im sorry.
     console.log('BID ' + JSON.stringify(meta));
 

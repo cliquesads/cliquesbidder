@@ -360,14 +360,6 @@ _Controller.prototype.createBidAgent = function(campaign){
                         // split above will create empty last line
                         if (line){
                             var meta = JSON.parse(line.slice(logging.BID_PREFIX.length));
-                            var pageKeywords = meta.page_keywords;
-                            var agentConfig = AgentConfig.deserialize(serialized_config),
-                                configHelpers = agentConfig.helpers,
-                                targetingConfig = agentConfig.targetingConfig;
-                            var bidKeywordInfo = configHelpers["getKeywordWeight"](pageKeywords, targetingConfig.keyword_targets);
-                            if (bidKeywordInfo.keyword !== '') {
-                                meta.bid_keyword = bidKeywordInfo.keyword;
-                            }
                             // call logger method, pass campaign and advertiser in.
                             logger.bid(meta, campaign, campaign.parent_advertiser);    
                         }
