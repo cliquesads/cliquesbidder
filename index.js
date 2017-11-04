@@ -134,7 +134,7 @@ function _parseCoreConfig(campaign, options){
         secure: true
     });
 
-    var url = new urls.ImpURL(ADSERVER_HOST, ADSERVER_SECURE_HOST, ADSERVER_PORT);
+    var url = new urls.ImpURL(ADSERVER_HOST, ADSERVER_SECURE_HOST, ADSERVER_SECURE_PORT);
 
     // small sub-function to render proper ad markup, depending on creative type
     function _getCreativeGroupMarkup(crg){
