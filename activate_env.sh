@@ -32,8 +32,8 @@ fi
 while getopts ":e:" opt; do
   case $opt in
     e)
-      if [ "$OPTARG" != 'production' ] && [ "$OPTARG" != 'dev' ]; then
-        echo "Invalid environment: $OPTARG.  Environment must be either 'dev' or 'production'"
+      if [ "$OPTARG" != 'production' ] && [ "$OPTARG" != 'dev' ] && [ "$OPTARG" != 'local-test' ] ; then
+        echo "Invalid environment: $OPTARG.  Environment must be either 'dev', 'production' or 'local-test'"
         return 1
       else
         env="$OPTARG"

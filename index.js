@@ -112,6 +112,7 @@ function _parseEnvConfig(bootstrap_file){
 var ADSERVER_HOST= config.get('AdServer.http.external.hostname');
 var ADSERVER_SECURE_HOST= config.get('AdServer.https.external.hostname');
 var ADSERVER_PORT = config.get('AdServer.http.external.port');
+var ADSERVER_SECURE_PORT = config.get('AdServer.https.external.port');
 
 /**
  * Translates Advertiser document from MongoDB into config compatible with
@@ -127,13 +128,13 @@ function _parseCoreConfig(campaign, options){
 
     // tag object used to generate creative markup from config stored in DB
     var tag = new tags.ImpTag(ADSERVER_HOST, {
-        port: ADSERVER_PORT,
+        port: ADSERVER_SECURE_PORT,
         secure_hostname: ADSERVER_SECURE_HOST,
         //TODO: Default to secure for now for all ads because markup generated statically, fix this!!
         secure: true
     });
 
-    var url = new urls.ImpURL(ADSERVER_HOST, ADSERVER_SECURE_HOST, ADSERVER_PORT);
+    var url = new urls.ImpURL(ADSERVER_HOST, ADSERVER_SECURE_HOST, ADSERVER_SECURE_PORT);
 
     // small sub-function to render proper ad markup, depending on creative type
     function _getCreativeGroupMarkup(crg){
