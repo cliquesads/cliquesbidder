@@ -17,7 +17,6 @@
     "mongodb": "^2.2.19",
     "mongoose": "^4.7.6",
     "node-uuid": "^1.4.2",
-    "pmx": "^0.3.14",
     "redis": "^0.12.1",
     "request": "^2.53.0",
     "request-ip": "0.0.4",
