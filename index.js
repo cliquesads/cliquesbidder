@@ -474,9 +474,12 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
         if (message.attributes.NODE_ENV === process.env.NODE_ENV){
             var campaign_id = message.data;
             filterCampaignByClique(campaign_id, function(err, campaign){
-                if (err) throw new Error(err);
-                logger.info('Received createBidder message for campaignId ' + campaign_id + ', spawning bidagent...');
-                controller.createBidAgent(campaign);
+                if (err) {
+                    return console.error(err);
+                } else {
+                    logger.info('Received createBidder message for campaignId ' + campaign_id + ', spawning bidagent...');
+                    controller.createBidAgent(campaign);
+                }
             });
         }
     });
@@ -495,9 +498,12 @@ bidderPubSub.subscriptions.updateBidder(function(err, subscription){
         if (message.attributes.NODE_ENV === process.env.NODE_ENV) {
             var campaign_id = message.data;
             filterCampaignByClique(campaign_id, function (err, campaign) {
-                if (err) throw new Error(err);
-                logger.info('Received updateBidder message for campaignId ' + campaign_id + ', updating config...');
-                controller.updateBidAgent(campaign);
+                if (err) {
+                    return console.error(err);
+                } else {
+                    logger.info('Received updateBidder message for campaignId ' + campaign_id + ', updating config...');
+                    controller.updateBidAgent(campaign);
+                }
             });
         }
     });
@@ -516,6 +522,9 @@ bidderPubSub.subscriptions.stopBidder(function(err, subscription){
         if (message.attributes.NODE_ENV === process.env.NODE_ENV) {
             var campaign_id = message.data;
             filterCampaignByClique(campaign_id, function (err, campaign) {
+                if (err){
+                    return console.error(err);
+                }
                 logger.info('Received stopBidder message for campaignId ' + campaign_id + ', killing bidAgent now...');
                 controller.stopBidAgent(campaign);
             });
