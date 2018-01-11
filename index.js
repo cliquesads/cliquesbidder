@@ -11,7 +11,6 @@ var BidAgentAccount = require('./bidding-agents/nodebidagent-config.js').BidAgen
 
 var config = require('config');
 var path = require('path');
-var pmx = require('pmx').init();
 var winston = require('winston');
 var util = require('util');
 var redis = require('redis');
@@ -42,7 +41,7 @@ var eventStreamer = new bigQueryUtils.BigQueryEventStreamer(bq_config,
 logger = new logging.BidderCLogger({
     transports: [
         new (winston.transports.Console)({timestamp:true}),
-        new (winston.transports.File)({filename:logfile,timestamp:true}),
+        new (winston.transports.File)({ filename:logfile, timestamp:true, maxsize: 1073741824, zippedArchive: true }),
         new (winston.transports.RedisEventCache)({
             eventStreamer: eventStreamer,
             redis_port: 6380 }
@@ -112,6 +111,7 @@ function _parseEnvConfig(bootstrap_file){
 var ADSERVER_HOST= config.get('AdServer.http.external.hostname');
 var ADSERVER_SECURE_HOST= config.get('AdServer.https.external.hostname');
 var ADSERVER_PORT = config.get('AdServer.http.external.port');
+var ADSERVER_SECURE_PORT = config.get('AdServer.https.external.port');
 
 /**
  * Translates Advertiser document from MongoDB into config compatible with
@@ -127,13 +127,13 @@ function _parseCoreConfig(campaign, options){
 
     // tag object used to generate creative markup from config stored in DB
     var tag = new tags.ImpTag(ADSERVER_HOST, {
-        port: ADSERVER_PORT,
+        port: ADSERVER_SECURE_PORT,
         secure_hostname: ADSERVER_SECURE_HOST,
         //TODO: Default to secure for now for all ads because markup generated statically, fix this!!
         secure: true
     });
 
-    var url = new urls.ImpURL(ADSERVER_HOST, ADSERVER_SECURE_HOST, ADSERVER_PORT);
+    var url = new urls.ImpURL(ADSERVER_HOST, ADSERVER_SECURE_HOST, ADSERVER_SECURE_PORT);
 
     // small sub-function to render proper ad markup, depending on creative type
     function _getCreativeGroupMarkup(crg){
@@ -200,7 +200,11 @@ function _parseTargetingConfig(campaign){
         geo_targets: campaign.geo_targets,
         blocked_geos: campaign.blocked_geos,
 
+        keyword_targets: campaign.keyword_targets,
+        blocked_keywords: campaign.blocked_keywords,
+
         placement_targets: campaign.placement_targets,
+        multi_bid: campaign.multi_bid,
         inventory_targets: campaign.inventory_targets,
         blocked_inventory: campaign.blocked_inventory,
         start_date: campaign.start_date,
@@ -225,7 +229,9 @@ function _getHelperFunctions(){
         getInventoryBlockStatus: advertiserModels.Campaign.getInventoryBlockStatus,
         getGeoWeight: advertiserModels.Campaign.getGeoWeight,
         getGeoBlockStatus: advertiserModels.Campaign.getGeoBlockStatus,
-    }
+        getKeywordWeight: advertiserModels.Campaign.getKeywordWeight,
+        getKeywordBlockStatus: advertiserModels.Campaign.getKeywordBlockStatus
+    };
 }
 
 /**
@@ -346,9 +352,18 @@ _Controller.prototype.createBidAgent = function(campaign){
                 try {
                     //TODO: have to wrap in try catch as this throws weird
                     //TODO: parsing bugs once in a while, figure out root cause
-                    var meta = JSON.parse(logline.slice(logging.BID_PREFIX.length));
-                    // call logger method, pass campaign and advertiser in.
-                    logger.bid(meta, campaign, campaign.parent_advertiser);
+                    // stdout stream sometimes emits data event for multiple lines at a time
+                    // even if sent to stdout as separate log lines, so split on \n
+                    var loglines = logline.split('\n');
+
+                    loglines.forEach(function(line){
+                        // split above will create empty last line
+                        if (line){
+                            var meta = JSON.parse(line.slice(logging.BID_PREFIX.length));
+                            // call logger method, pass campaign and advertiser in.
+                            logger.bid(meta, campaign, campaign.parent_advertiser);    
+                        }
+                    });
                 } catch (e) {
                     logger.error("ERROR parsing bid logline -- tried to parse the following:");
                     logger.info(logline);
@@ -456,12 +471,17 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
     if (err) throw new Error('Error creating subscription to createBidder topic: ' + err);
     // message listener
     subscription.on('message', function(message){
-        var campaign_id = message.data;
-        filterCampaignByClique(campaign_id, function(err, campaign){
-            if (err) throw new Error(err);
-            logger.info('Received createBidder message for campaignId ' + campaign_id + ', spawning bidagent...');
-            controller.createBidAgent(campaign);
-        });
+        if (message.attributes.NODE_ENV === process.env.NODE_ENV){
+            var campaign_id = message.data;
+            filterCampaignByClique(campaign_id, function(err, campaign){
+                if (err) {
+                    return console.error(err);
+                } else {
+                    logger.info('Received createBidder message for campaignId ' + campaign_id + ', spawning bidagent...');
+                    controller.createBidAgent(campaign);
+                }
+            });
+        }
     });
     subscription.on('error', function(err){
         logger.error('Error subscribing to CreateBidder topic, will not be able to receive signals until this is fixed');
@@ -475,12 +495,17 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
 bidderPubSub.subscriptions.updateBidder(function(err, subscription){
     if (err) throw new Error('Error creating subscription to updateBidder topic: ' + err);
     subscription.on('message', function(message){
-        var campaign_id = message.data;
-        filterCampaignByClique(campaign_id, function(err, campaign) {
-            if (err) throw new Error(err);
-            logger.info('Received updateBidder message for campaignId ' + campaign_id + ', updating config...');
-            controller.updateBidAgent(campaign);
-        });
+        if (message.attributes.NODE_ENV === process.env.NODE_ENV) {
+            var campaign_id = message.data;
+            filterCampaignByClique(campaign_id, function (err, campaign) {
+                if (err) {
+                    return console.error(err);
+                } else {
+                    logger.info('Received updateBidder message for campaignId ' + campaign_id + ', updating config...');
+                    controller.updateBidAgent(campaign);
+                }
+            });
+        }
     });
     subscription.on('error', function(err){
         logger.error('Error subscribing to UpdateBidder topic, will not be able to receive signals until this is fixed');
@@ -494,11 +519,16 @@ bidderPubSub.subscriptions.updateBidder(function(err, subscription){
 bidderPubSub.subscriptions.stopBidder(function(err, subscription){
     if (err) throw new Error('Error creating subscription to stopBidder topic: ' + err);
     subscription.on('message', function(message){
-        var campaign_id = message.data;
-        filterCampaignByClique(campaign_id, function(err, campaign){
-            logger.info('Received stopBidder message for campaignId '+ campaign_id + ', killing bidAgent now...');
-            controller.stopBidAgent(campaign);
-        });
+        if (message.attributes.NODE_ENV === process.env.NODE_ENV) {
+            var campaign_id = message.data;
+            filterCampaignByClique(campaign_id, function (err, campaign) {
+                if (err){
+                    return console.error(err);
+                }
+                logger.info('Received stopBidder message for campaignId ' + campaign_id + ', killing bidAgent now...');
+                controller.stopBidAgent(campaign);
+            });
+        }
     });
     subscription.on('error', function(err){
         logger.error('Error subscribing to StopBidder topic, will not be able to receive signals until this is fixed');
