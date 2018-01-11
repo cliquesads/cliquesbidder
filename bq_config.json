@@ -2,7 +2,7 @@
   "event_tables":{
     "BID": {
       "tableId": "bids",
-      "datasetId": "ad_events",
+      "datasetId": "smartertravel_ad_events",
       "schema": {
         "fields": [
           {"name": "hostname", "type": "STRING"},
@@ -18,7 +18,8 @@
           {"name": "creative_group", "type": "STRING"},
           {"name": "campaign", "type": "STRING"},
           {"name": "advertiser", "type": "STRING"},
-          {"name": "adv_clique", "type": "STRING"}
+          {"name": "adv_clique", "type": "STRING"},
+          {"name": "bid_keyword", "type": "STRING"}
         ]
       }
     }

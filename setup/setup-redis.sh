@@ -17,15 +17,15 @@ fi
 source ../config/environments/bidder_environment.cfg
 
 #install redis from source to ensure latest version
-REDISPATH=$HOME'/redis-'$REDISVERSION
+REDISPATH=$HOME'/redis-'$REDIS_VERSION
 
 if [ ! -d $REDISPATH ]; then
     cd $HOME
-    wget 'http://download.redis.io/releases/redis-'$REDISVERSION'.tar.gz'
-    tar xzf 'redis-'$REDISVERSION'.tar.gz'
-    cd 'redis-'$REDISVERSION
+    wget 'http://download.redis.io/releases/redis-'$REDIS_VERSION'.tar.gz'
+    tar xzf 'redis-'$REDIS_VERSION'.tar.gz'
+    cd 'redis-'$REDIS_VERSION
     make
-    rm $HOME'/redis-'$REDISVERSION'.tar.gz'
+    rm $HOME'/redis-'$REDIS_VERSION'.tar.gz'
 fi
 
 cd $REDISPATH'/src'

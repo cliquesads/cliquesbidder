@@ -32,8 +32,8 @@ fi
 while getopts ":e:" opt; do
   case $opt in
     e)
-      if [ "$OPTARG" != 'production' ] && [ "$OPTARG" != 'dev' ]; then
-        echo "Invalid environment: $OPTARG.  Environment must be either 'dev' or 'production'"
+      if [ "$OPTARG" != 'production' ] && [ "$OPTARG" != 'dev' ] && [ "$OPTARG" != 'local-test' ] ; then
+        echo "Invalid environment: $OPTARG.  Environment must be either 'dev', 'production' or 'local-test'"
         return 1
       else
         env="$OPTARG"
@@ -57,7 +57,7 @@ export NODE_ENV="$env"
 
 # make sure cliques-config repo is cloned & pull any new commits
 if [ ! -d $HOME"/repositories/cliques-config" ]; then
-    git clone git@github.com:cliquesads/cliques-config.git ../cliques-config
+    git clone git@github.com:cliquesads/smartertravel-config.git ../cliques-config
     ln -s ../cliques-config config
 else
     cd ../cliques-config
