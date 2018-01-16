@@ -32,7 +32,7 @@ var logfile = path.join(
 
 const adEventDataset = config.get("Bidder.logger.bigQuery.adEventDataset");
 const httpEventDataset = config.get("Bidder.logger.bigQuery.httpEventDataset");
-var bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config.json', adEventDataset, httpEventDataset);
+var bq_config = bigQueryUtils.loadFullBigQueryConfig('./bq_config.json', httpEventDataset, adEventDataset);
 var chunkSize = config.get('Bidder.logger.redis_event_cache.chunkSize');
 var eventStreamer = new bigQueryUtils.BigQueryEventStreamer(bq_config,
     googleAuth.DEFAULT_JWT_SECRETS_FILE,chunkSize);
