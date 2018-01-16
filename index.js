@@ -429,7 +429,7 @@ _Controller.prototype.stopBidAgent = function(campaign){
 // Here's where the Controller methods actually get hooked to signals from
 // the outside world via Google PubSub api.
 
-if (process.env.NODE_ENV == 'local-test'){
+if (process.env.NODE_ENV === 'local-test'){
     var pubsub_options = {
         projectId: 'mimetic-codex-781',
         test: true,
@@ -472,13 +472,18 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
         if (message.attributes.NODE_ENV === process.env.NODE_ENV){
             var campaign_id = message.data;
             filterCampaignByClique(campaign_id, function(err, campaign){
-                if (err) {
-                    return console.error(err);
-                } else {
-                    logger.info('Received createBidder message for campaignId ' + campaign_id + ', spawning bidagent...');
-                    controller.createBidAgent(campaign);
-                }
+                // if error is returned, message will not get ack'd
+                // TODO: should send alert here
+                if (err) return console.error(err);
+                logger.info('Received createBidder message for campaignId ' + campaign_id + ', spawning bidagent...');
+                controller.createBidAgent(campaign);
+                // finally, ack message if campaign was either filtered out successfully based on
+                // clique/env, or if controller method was called
+                message.ack();
             });
+        } else {
+            // otherwise, ack and move on
+            message.ack();
         }
     });
     subscription.on('error', function(err){
@@ -496,13 +501,18 @@ bidderPubSub.subscriptions.updateBidder(function(err, subscription){
         if (message.attributes.NODE_ENV === process.env.NODE_ENV) {
             var campaign_id = message.data;
             filterCampaignByClique(campaign_id, function (err, campaign) {
-                if (err) {
-                    return console.error(err);
-                } else {
-                    logger.info('Received updateBidder message for campaignId ' + campaign_id + ', updating config...');
-                    controller.updateBidAgent(campaign);
-                }
+                // if error is returned, message will not get ack'd
+                // TODO: should send alert here
+                if (err) return console.error(err);
+                logger.info('Received updateBidder message for campaignId ' + campaign_id + ', updating config...');
+                controller.updateBidAgent(campaign);
+                // finally, ack message if campaign was either filtered out successfully based on
+                // clique/env, or if controller method was called
+                message.ack();
             });
+        } else {
+            // otherwise, ack and move on
+            message.ack();
         }
     });
     subscription.on('error', function(err){
@@ -520,12 +530,18 @@ bidderPubSub.subscriptions.stopBidder(function(err, subscription){
         if (message.attributes.NODE_ENV === process.env.NODE_ENV) {
             var campaign_id = message.data;
             filterCampaignByClique(campaign_id, function (err, campaign) {
-                if (err){
-                    return console.error(err);
-                }
+                // if error is returned, message will not get ack'd
+                // TODO: should send alert here
+                if (err) return console.error(err);
                 logger.info('Received stopBidder message for campaignId ' + campaign_id + ', killing bidAgent now...');
                 controller.stopBidAgent(campaign);
+                // finally, ack message if campaign was either filtered out successfully based on
+                // clique/env, or if controller method was called
+                message.ack();
             });
+        } else {
+            // otherwise, ack and move on
+            message.ack();
         }
     });
     subscription.on('error', function(err){
