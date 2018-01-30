@@ -251,6 +251,24 @@ agent.onWin = function(timestamp, confidence, auctionId, spotNum, secondPrice, b
   console.log("WIN :" + JSON.stringify(meta));
 };
 
+agent.onClick = function(timestamp, auctionId, spotId, spotIndex, bidRequest, bidMeta, winMeta, impressionMeta, clickMeta, augmentations, visits){
+    var meta = {
+        type: "CLICK",
+        timestamp: timestamp,
+        auctionId: auctionId,
+        spotId: spotId,
+        spotIndex: spotIndex,
+        bidRequest: bidRequest,
+        bidMeta: bidMeta,
+        winMeta: winMeta,
+        impressionMeta: impressionMeta,
+        clickMeta: clickMeta,
+        augmentations: augmentations,
+        visits: visits
+    };
+    console.log("CLICK: " + JSON.stringify(meta));
+};
+
 // the auction was not won by this agent
 agent.onLoss = function(timestamp, confidence, auctionId, spotNum, secondPrice, bidRequest, ourBid, accountInfo, metadata){
     var meta = {
