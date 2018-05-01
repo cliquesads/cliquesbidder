@@ -200,6 +200,7 @@ function _parseTargetingConfig(campaign){
 
         keyword_targets: campaign.keyword_targets,
         blocked_keywords: campaign.blocked_keywords,
+        unblocked_countries: campaign.unblocked_countries,
 
         placement_targets: campaign.placement_targets,
         multi_bid: campaign.multi_bid,
