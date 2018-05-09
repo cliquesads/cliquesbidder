@@ -1,0 +1,2 @@
+pygerduty==0.28
+requests==2.5.3
