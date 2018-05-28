@@ -43,9 +43,10 @@ if __name__ == '__main__':
         # r = requests.get('http://35.196.104.183:12339')
         r = requests.get('http://127.0.0.1:12339')
 
-        logfile = open("test.txt", "a+")
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+        logfile = open("/home/bliang/repositories/test.txt", "a")
         logfile.write(st + " --- " + r.text)
+        logfile.close
 
         print r.text
     except requests.ConnectionError, e:
