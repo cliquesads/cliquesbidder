@@ -153,7 +153,7 @@ function _parseCoreConfig(campaign, options){
         providerConfig: {
             cliques: {
                 seat: campaign.clique,
-                bidOn: config.get('Bidder.bidOn') 
+                pricing: config.get('Pricing')
             }
         },
         augmentations:{
