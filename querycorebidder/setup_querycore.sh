@@ -13,7 +13,7 @@ sudo apt-get install libffi-dev
 # running into SSL errors w/ system pip cause it uses the non-secure endpoint, so point
 # it directly at the SSL endpoint for now with -i flag.
 sudo -H pip install virtualenv -i https://pypi.python.org/simple/
-sudo -H pip upgrade virtualenv -i https://pypi.python.org/simple/
+sudo -H pip install --upgrade virtualenv -i https://pypi.python.org/simple/
 
 VIRTUALENV_FOLDER="./venv"
 if [ ! -d "VIRTUALENV_FOLDER" ]; then
