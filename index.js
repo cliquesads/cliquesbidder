@@ -152,7 +152,8 @@ function _parseCoreConfig(campaign, options){
         bidProbability: bidProbability,
         providerConfig: {
             cliques: {
-                seat: campaign.clique
+                seat: campaign.clique,
+                pricing: config.get('Pricing')
             }
         },
         augmentations:{
