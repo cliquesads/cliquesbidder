@@ -20,5 +20,8 @@ if [ ! -d "VIRTUALENV_FOLDER" ]; then
 fi
 
 # This sets the crontab to run querycore.py every minutes
-newline="*/5 * * * * cd /home/bliang/repositories/cliquesbidder; . ./activate_env.sh -e production; . /home/bliang/repositories/cliquesbidder/querycorebidder/venv/bin/activate; python /home/bliang/repositories/cliquesbidder/querycorebidder/querycore.py >> /home/bliang/rtbkit_logs/cron.log\n"
+newline="*/5 * * * * cd /home/bliang/repositories/cliquesbidder/querycorebidder; . /home/bliang/repositories/cliquesbidder/querycorebidder/activate; python /home/bliang/repositories/cliquesbidder/querycorebidder/querycore.py >> /home/bliang/rtbkit_logs/cron.log 2>&1"
 (crontab -l; echo "$newline") | crontab -
+echo "Core checkup script cron'd to run every five (5) minutes."
+
+exit 0
