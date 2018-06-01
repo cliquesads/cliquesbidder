@@ -20,5 +20,5 @@ if [ ! -d "VIRTUALENV_FOLDER" ]; then
 fi
 
 # This sets the crontab to run querycore.py every minutes
-newline="*/5 * * * * cd /home/bliang/repositories/cliquesbidder/querycorebidder; . /home/bliang/repositories/cliquesbidder/querycorebidder/activate; python /home/bliang/repositories/cliquesbidder/querycorebidder/querycore.py >> /home/bliang/rtbkit_logs/cron.log 2>&1/n"
+newline="*/5 * * * * cd /home/bliang/repositories/cliquesbidder/querycorebidder; . /home/bliang/repositories/cliquesbidder/querycorebidder/activate; python /home/bliang/repositories/cliquesbidder/querycorebidder/querycore.py >> /home/bliang/rtbkit_logs/cron.log 2>&1"
 (crontab -l; echo "$newline") | crontab -
