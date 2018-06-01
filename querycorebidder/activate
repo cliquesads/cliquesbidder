@@ -1,5 +1,5 @@
 #!/bin/bash
-. $HOME/repositories/cliquesbidder/venv/bin/activate
+. $HOME/repositories/cliquesbidder/querycorebidder/venv/bin/activate
 
 # usage text visible when --help flag passed in
 usage="activate-- Activate specific envioronment, setting all necessary environment variables.
@@ -10,7 +10,7 @@ where:
 
 example:
     # activates the 'dev' environment
-    $ source activate.sh -e dev
+    $ source activate -e dev
 "
 
 OPTIND=1
