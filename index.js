@@ -475,7 +475,10 @@ bidderPubSub.subscriptions.createBidder(function(err, subscription){
             filterCampaignByClique(campaign_id, function(err, campaign){
                 // if error is returned, message will not get ack'd
                 // TODO: should send alert here
-                if (err) return console.error(err);
+                if (err) {
+                    message.ack();
+                    return console.error(err);
+                }
                 logger.info('Received createBidder message for campaignId ' + campaign_id + ', spawning bidagent...');
                 controller.createBidAgent(campaign);
                 // finally, ack message if campaign was either filtered out successfully based on
