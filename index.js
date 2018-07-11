@@ -198,6 +198,7 @@ function _parseTargetingConfig(campaign){
 
         geo_targets: campaign.geo_targets,
         blocked_geos: campaign.blocked_geos,
+        target_only_geos: campaign.target_only_geos,
 
         keyword_targets: campaign.keyword_targets,
         blocked_keywords: campaign.blocked_keywords,

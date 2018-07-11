@@ -112,7 +112,7 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
         bidRequest.location.countryCode + '-' + bidRequest.location.regionCode,
         bidRequest.location.cityName
     ];
-    var isGeoBlocked = configHelpers["getGeoBlockStatus"](geoBranch, targetingConfig.blocked_geos);
+    var isGeoBlocked = configHelpers["getGeoBlockStatus"](geoBranch, targetingConfig.blocked_geos, targetingConfig.target_only_geos);
     if (isGeoBlocked) {
         return;
     }
