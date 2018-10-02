@@ -193,12 +193,14 @@ function _parseTargetingConfig(campaign){
     return {
         base_bid: campaign.base_bid,
         max_bid: campaign.max_bid,
-        country_targets: campaign.country_targets,
-        dma_targets: campaign.dma_targets,
 
         geo_targets: campaign.geo_targets,
         blocked_geos: campaign.blocked_geos,
         target_only_geos: campaign.target_only_geos,
+
+        dma_targets: campaign.dma_targets,
+        blocked_dmas: campaign.blocked_dmas,
+        target_only_dmas: campaign.target_only_dmas,
 
         keyword_targets: campaign.keyword_targets,
         blocked_keywords: campaign.blocked_keywords,
@@ -229,6 +231,8 @@ function _getHelperFunctions(){
         getInventoryBlockStatus: advertiserModels.Campaign.getInventoryBlockStatus,
         getGeoWeight: advertiserModels.Campaign.getGeoWeight,
         getGeoBlockStatus: advertiserModels.Campaign.getGeoBlockStatus,
+        getDmaWeight: advertiserModels.Campaign.getDmaWeight,
+        getDmaBlockStatus: advertiserModels.Campaign.getDmaBlockStatus,
         getKeywordWeight: advertiserModels.Campaign.getKeywordWeight,
         getKeywordBlockStatus: advertiserModels.Campaign.getKeywordBlockStatus
     };
