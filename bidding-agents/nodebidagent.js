@@ -117,7 +117,8 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
         return;
     }
 
-    var isDmaBlocked = configHelpers["getDmaBlockStatus"](Number(copiedBidRequest.location.metro), targetingConfig.blocked_dmas, targetingConfig.target_only_dmas);
+    var dma = copiedBidRequest.location ? Number(copiedBidRequest.location.metro) : null;
+    var isDmaBlocked = configHelpers["getDmaBlockStatus"](dma, targetingConfig.blocked_dmas, targetingConfig.target_only_dmas);
     if (isDmaBlocked) {
         return;
     }
@@ -133,7 +134,7 @@ var getBidArgs = function(spotIndex, auctionId, bidRequest, bids){
     var geoWeight = configHelpers["getGeoWeight"](geoBranch, targetingConfig.geo_targets);
     bid = geoWeight * bid;
 
-    var dmaWeight = configHelpers["getDmaWeight"](Number(copiedBidRequest.location.metro), targetingConfig.dma_targets);
+    var dmaWeight = configHelpers["getDmaWeight"](dma, targetingConfig.dma_targets);
     bid = dmaWeight * bid;
 
     var bidKeywordInfo = configHelpers["getKeywordWeight"](pageKeywords, targetingConfig.keyword_targets);
