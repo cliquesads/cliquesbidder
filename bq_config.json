@@ -20,6 +20,10 @@
           {"name": "adv_clique", "type": "STRING"},
           {"name": "bid_keyword", "type": "STRING"}
         ]
+      },
+      "timePartitioning": {
+          "type": "DAY",
+          "field": "tstamp"
       }
     }
   }
